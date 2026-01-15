@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # DEBUG = True
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] #💡potem zmienic
 
 
 # Application definition
@@ -69,7 +69,7 @@ ROOT_URLCONF = 'portal_united.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'], #💡sugestia ChatGPT - moze trzeba bedzie zmienic
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -164,26 +164,43 @@ SITE_ID = 1
 
 # --- Rejestracja i logowanie ---
 
-# Wymagaj adresu email przy rejestracji
-ACCOUNT_EMAIL_REQUIRED = True
+# --- STARE (deprecated) ---
+# # Wymagaj adresu email przy rejestracji
+# ACCOUNT_EMAIL_REQUIRED = True
+# # Metoda autoryzacji: 'username' | 'email' | 'username_email'
+# # 'username_email' = użytkownik może zalogować się username LUB emailem
+# ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+# # Czy username jest wymagany przy rejestracji? (TAK - potrzebujemy username)
+# ACCOUNT_USERNAME_REQUIRED = True
 
+
+# --DJANGO-ALLAUTH CONFIGURATION - NOWA SKŁADNIA (allauth 0.50+)--
+# --- Metody logowania ---
+# Użytkownik może logować się username LUB emailem
+ACCOUNT_LOGIN_METHODS = ['email', 'username']
+
+# --- Pola rejestracji ---
+# Gwiazdka (*) = pole wymagane
+# Nasze custom pola (user_type, first_name, community_name) są w CustomSignupForm
+ACCOUNT_SIGNUP_FIELDS = [
+    'email*',      # Email wymagany
+    'username*',   # Username wymagany
+    'password1*',  # Hasło wymagane
+    'password2*',  # Potwierdzenie hasła wymagane
+]
 # Email musi być unikalny (dwie osoby nie mogą mieć tego samego emaila)
 ACCOUNT_UNIQUE_EMAIL = True
 
-# Metoda autoryzacji: 'username' | 'email' | 'username_email'
-# 'username_email' = użytkownik może zalogować się username LUB emailem
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-
-# Czy username jest wymagany przy rejestracji? (TAK - potrzebujemy username)
-ACCOUNT_USERNAME_REQUIRED = True
 # --- Weryfikacja email ---
 
 # Weryfikacja email: 'mandatory' | 'optional' | 'none'
 # 'mandatory' = użytkownik MUSI zweryfikować email żeby się zalogować
 # 'optional' = może się zalogować, ale dostanie przypomnienie o weryfikacji
+# 'none' = brak weryfikacji
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # Czy automatycznie logować użytkownika po rejestracji?
-# False = najpierw musi zweryfikować email, potem się zalogować
+# False = najpierw musi zweryfikować email, potem się zalogować ❓
+# Czy automatycznie logować po weryfikacji email?
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
 # Czy wysłać email powitalny po weryfikacji?
@@ -199,7 +216,7 @@ ACCOUNT_PASSWORD_INPUT_RENDER_VALUE = False
 
 # --- Sesje ---
 
-# Ile dni zapamiętać sesję "zapamiętaj mnie"? => tutaj brak lkiczby dni
+# Czy zapamiętać sesję "zapamiętaj mnie"? => tutaj brak lkiczby dni
 ACCOUNT_SESSION_REMEMBER = True
 
 # --- Przekierowania ---
@@ -216,7 +233,7 @@ LOGIN_URL = '/accounts/login/'
 # --- Formularze ---
 
 # Czy podczas rejestracji pytać o imię/nazwisko w standardowym formularzu?
-# Ustawimy False bo stworzymy własny formularz
+# Ustawimy False bo stworzymy własny formularz ❓
 # Nasz custom formularz rejestracji z wyborem typu użytkownika
 ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
 
@@ -226,7 +243,10 @@ ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
 
 # --- Rozwój (development) - Console Backend ---
 # Email będzie "wysyłany" do konsoli/terminala (dla testów lokalnych)
-
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # --- Produkcja (production) - Prawdziwe emaile ---

@@ -1,0 +1,36 @@
+{% extends 'communities/base.html' %}
+{% load account %}
+
+{% block title %}Wylogowanie - Portal UNITED{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="card-title mb-4">Wyloguj się</h2>
+                
+                <p class="mb-4">
+                    Czy na pewno chcesz się wylogować?
+                </p>
+                
+                <!-- Formularz wylogowania -->
+                <form method="post" action="{% url 'account_logout' %}">
+                    {% csrf_token %}
+                    
+                    {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                    {% endif %}
+                    
+                    <button type="submit" class="btn btn-danger">
+                        Tak, wyloguj mnie
+                    </button>
+                    <a href="{% url 'communities:home' %}" class="btn btn-secondary">
+                        Anuluj
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
