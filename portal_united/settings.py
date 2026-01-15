@@ -41,8 +41,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Apps
     'communities',
     'accounts',
+    # Django-allauth wymaga 'sites' framework
+    'django.contrib.sites',
+    # Django-allauth - system autoryzacji
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',  # Opcjonalnie - dla Google/Facebook login w przyszłości
 ]
 
 MIDDLEWARE = [
@@ -53,6 +60,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Django-allauth wymaga tego middleware
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'portal_united.urls'
@@ -133,4 +142,104 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# AUTHENTICATION BACKENDS
+# Django-allauth potrzebuje własnego backendu obok standardowego
+AUTHENTICATION_BACKENDS = [
+    # Standardowy backend Django (username/password)
+    'django.contrib.auth.backends.ModelBackend',
+    
+    # Backend allauth - pozwala na logowanie emailem
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+# ============================================================================
+# SITES FRAMEWORK
+# Django-allauth wymaga tego - każda instalacja Django może obsługiwać
+# wiele stron (sites). My mamy jedną.
+SITE_ID = 1
+
+# ============================================================================
+# DJANGO-ALLAUTH CONFIGURATION
+# Główna konfiguracja zachowania allauth
+
+# --- Rejestracja i logowanie ---
+
+# Wymagaj adresu email przy rejestracji
+ACCOUNT_EMAIL_REQUIRED = True
+
+# Email musi być unikalny (dwie osoby nie mogą mieć tego samego emaila)
+ACCOUNT_UNIQUE_EMAIL = True
+
+# Metoda autoryzacji: 'username' | 'email' | 'username_email'
+# 'username_email' = użytkownik może zalogować się username LUB emailem
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+
+# Czy username jest wymagany przy rejestracji? (TAK - potrzebujemy username)
+ACCOUNT_USERNAME_REQUIRED = True
+# --- Weryfikacja email ---
+
+# Weryfikacja email: 'mandatory' | 'optional' | 'none'
+# 'mandatory' = użytkownik MUSI zweryfikować email żeby się zalogować
+# 'optional' = może się zalogować, ale dostanie przypomnienie o weryfikacji
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+# Czy automatycznie logować użytkownika po rejestracji?
+# False = najpierw musi zweryfikować email, potem się zalogować
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+
+# Czy wysłać email powitalny po weryfikacji?
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
+
+# --- Hasła ---
+
+# Minimalna długość hasła
+ACCOUNT_PASSWORD_MIN_LENGTH = 8
+
+# Czy pokazywać hasło podczas wpisywania? (bezpieczniej False)
+ACCOUNT_PASSWORD_INPUT_RENDER_VALUE = False
+
+# --- Sesje ---
+
+# Ile dni zapamiętać sesję "zapamiętaj mnie"? => tutaj brak lkiczby dni
+ACCOUNT_SESSION_REMEMBER = True
+
+# --- Przekierowania ---
+
+# Gdzie przekierować po zalogowaniu?
+LOGIN_REDIRECT_URL = '/'
+
+# Gdzie przekierować po wylogowaniu?
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+# Gdzie przekierować jeśli użytkownik próbuje dostać się do chronionej strony?
+LOGIN_URL = '/accounts/login/'
+
+# --- Formularze ---
+
+# Czy podczas rejestracji pytać o imię/nazwisko w standardowym formularzu?
+# Ustawimy False bo stworzymy własny formularz
+# Nasz custom formularz rejestracji z wyborem typu użytkownika
+ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
+
+
+# ============================================================================
+# EMAIL CONFIGURATION - Wysyłanie emaili weryfikacyjnych
+
+# --- Rozwój (development) - Console Backend ---
+# Email będzie "wysyłany" do konsoli/terminala (dla testów lokalnych)
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# --- Produkcja (production) - Prawdziwe emaile ---
+# Odkomentować to gdy będziemy wdrażać na serwer i skonfigurować prawdziwy SMTP
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # Dla Gmail
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'twoj-email@gmail.com'  # Twój email
+# EMAIL_HOST_PASSWORD = 'twoje-haslo-aplikacji'  # Hasło aplikacji (nie zwykłe hasło!)
+# DEFAULT_FROM_EMAIL = 'Portal UNITED <noreply@portalunited.com>'
+
+# Uwaga: Dla Gmail trzeba wygenerować "hasło aplikacji" w ustawieniach konta Google
+# (nie używać zwykłego hasła do konta!)
 

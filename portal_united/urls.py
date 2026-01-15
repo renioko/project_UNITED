@@ -19,5 +19,9 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('communities.urls')), # Główne URLe
+    # Django-allauth URLs - obsługuje /accounts/login/, /accounts/signup/, itp.
+    # WAŻNE: To MUSI być PRZED 'communities.urls' żeby działało
+    path('accounts/', include('allauth.urls')),
+    # Główne URLe
+    path('', include('communities.urls')),
 ]

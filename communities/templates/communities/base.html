@@ -20,12 +20,37 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'communities:community_list' %}">Wspólnoty</a>
                     </li>
+                    {% if user.is_authenticated %}
+                    <!-- Użytkownik zalogowany -->
                     <li class="nav-item">
+                        <a class="nav-link" href="#">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link">Witaj, {{ user.username }}!</span>
+                    </li>
+                    <li class="nav-item">
+                        <!-- Allauth ma swój URL do wylogowania -->
+                        <a class="nav-link" href="{% url 'account_logout' %}">Wyloguj się</a>
+                    </li>
+
+                    {% else %}
+                    <!-- Użytkownik niezalogowany -->
+                    <li class="nav-item">
+                        <!-- Allauth URLs -->
+                        <a class="nav-link" href="{% url 'account_login' %}">Zaloguj się</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white ms-2" href="{% url 'account_signup' %}">
+                            Zarejestruj się
+                        </a>
+                    </li>
+                    {% endif %}
+                    <!-- <li class="nav-item">
                         <a class="nav-link" href="#">Zaloguj się</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link btn btn-primary text-white" href="#">Zarejestruj się</a>
-                    </li>
+                    </li> -->
                 </ul>
             </div>
         </div>

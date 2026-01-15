@@ -1,15 +1,12 @@
-# from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView, DetailView
 from django.db.models import Q
 from .models import CommunityProfile, Tag
 
+
 class HomeView(TemplateView):
     """Strona główna"""
     template_name = 'communities/home.html'
-
-# def home(request):
-#     """Strona główna"""
-#     return render(request, 'communities/home.html')
 
 class CommunityListView(ListView):
     """Lista wspólnot"""
@@ -54,22 +51,6 @@ class CommunityListView(ListView):
         context['denominations'] = CommunityProfile.DENOMINATION_CHOICES
         return context
     
-# def community_list(request):
-#     """Lista wspólnot"""
-#     communities = CommunityProfile.objects.filter(is_active=True)
-#     tags = Tag.objects.all()
-    
-#     # Proste filtrowanie (później rozbudujemy)
-#     city_filter = request.GET.get('city')
-#     if city_filter:
-#         communities = communities.filter(city__icontains=city_filter)
-    
-#     context = {
-#         'communities': communities,
-#         'tags': tags,
-#     }
-#     return render(request, 'communities/community_list.html', context)
-
 class CommunityDetailView(DetailView):
     """Szczegóły wspólnoty"""
     model = CommunityProfile
@@ -87,17 +68,6 @@ class CommunityDetailView(DetailView):
             is_active=True
         ).select_related('person__person_profile').order_by('-joined_date')
         return context
-
-# def community_detail(request, pk):
-#     """Szczegóły wspólnoty"""
-#     community = get_object_or_404(CommunityProfile, pk=pk, is_active=True)
-#     members = community.memberships.filter(is_active=True).select_related('person')
-    
-#     context = {
-#         'community': community,
-#         'members': members,
-#     }
-#     return render(request, 'communities/community_detail.html', context)
 
 # ====================================================
 ## **Teraz templates - najprostsza wersja:**
