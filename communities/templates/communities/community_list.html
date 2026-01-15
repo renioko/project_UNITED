@@ -1,0 +1,52 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Lista wspólnot{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Wspólnoty religijne</h1>
+
+<!-- Prosty filtr -->
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <input type="text" name="city" class="form-control" placeholder="Filtruj po mieście" value="{{ request.GET.city }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary">Filtruj</button>
+        </div>
+    </div>
+</form>
+
+<!-- Lista wspólnot -->
+<div class="row">
+    {% for community in communities %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            {% if community.photo_url %}
+            <img src="{{ community.photo_url }}" class="card-img-top" alt="{{ community.name }}" style="height: 200px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ community.name }}</h5>
+                <p class="card-text">{{ community.description|truncatewords:20 }}</p>
+                <p class="text-muted">
+                    <small>📍 {{ community.city }}</small>
+                    {% if community.denomination %}
+                    <br><small>{{ community.get_denomination_display }}</small>
+                    {% endif %}
+                </p>
+                <div class="mb-2">
+                    {% for tag in community.tags.all %}
+                    <span class="badge bg-secondary">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'communities:community_detail' community.pk %}" class="btn btn-primary">Zobacz profil</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p class="text-center">Nie znaleziono wspólnot.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Strona główna - Portal UNITED{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="display-4 mb-4">Witaj w Portal UNITED</h1>
+    <p class="lead">Miejsce, gdzie wspólnoty religijne się spotykają, współpracują i rozwijają.</p>
+    
+    <div class="mt-5">
+        <a href="{% url 'communities:community_list' %}" class="btn btn-primary btn-lg">
+            Zobacz wspólnoty
+        </a>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Dla wspólnot</h5>
+                <p class="card-text">Stwórz profil swojej wspólnoty i dotrzyjcie do nowych członków.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Dla osób</h5>
+                <p class="card-text">Znajdź wspólnotę blisko siebie i dołącz do ich działalności.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Współpraca</h5>
+                <p class="card-text">Organizujcie wspólne wydarzenia i projekty.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

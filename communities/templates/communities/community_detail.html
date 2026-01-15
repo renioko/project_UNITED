@@ -1,0 +1,67 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}{{ community.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        {% if community.photo_url %}
+        <img src="{{ community.photo_url }}" class="img-fluid rounded mb-4" alt="{{ community.name }}">
+        {% endif %}
+        
+        <h1>{{ community.name }}</h1>
+        <p class="lead">{{ community.description }}</p>
+        
+        <div class="mb-3">
+            {% for tag in community.tags.all %}
+            <span class="badge bg-primary">{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+        
+        <hr>
+        
+        <h3>O wspólnocie</h3>
+        <p>{{ community.full_description|default:"Brak szczegółowego opisu." }}</p>
+        
+        <h3 class="mt-4">Członkowie ({{ members.count }})</h3>
+        <ul class="list-group">
+            {% for membership in members %}
+            <li class="list-group-item">
+                {{ membership.person.person_profile.first_name }} 
+                {% if membership.role != 'member' %}
+                <span class="badge bg-info">{{ membership.get_role_display }}</span>
+                {% endif %}
+            </li>
+            {% empty %}
+            <li class="list-group-item">Brak członków.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Informacje kontaktowe</h5>
+                <p><strong>Miasto:</strong> {{ community.city }}</p>
+                {% if community.parish %}
+                <p><strong>Parafia:</strong> {{ community.parish }}</p>
+                {% endif %}
+                {% if community.denomination %}
+                <p><strong>Denominacja:</strong> {{ community.get_denomination_display }}</p>
+                {% endif %}
+                {% if community.contact_email %}
+                <p><strong>Email:</strong> <a href="mailto:{{ community.contact_email }}">{{ community.contact_email }}</a></p>
+                {% endif %}
+                {% if community.website %}
+                <p><strong>Strona WWW:</strong> <a href="{{ community.website }}" target="_blank">Odwiedź</a></p>
+                {% endif %}
+                
+                <hr>
+                
+                <button class="btn btn-success w-100">Dołącz do wspólnoty</button>
+                <small class="text-muted d-block mt-2">Wymaga zalogowania</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
