@@ -4,12 +4,16 @@ from django.db import models
 class CustomUser(AbstractUser):
     """
     Rozszerzony model użytkownika z typem konta
+    # WAŻNE: Usunięto 'community' - wszyscy użytkownicy to osoby!
+    # Wspólnoty nie są już użytkownikami.
     """
     USER_TYPE_CHOICES = (
         ('person', 'Osoba indywidualna'),
-        ('community', 'Wspólnota'),
+        # ('community', 'Wspólnota'),
     )
     
+    # UWAGA: Zostawiamy pole user_type w modelu (dla kompatybilności wstecznej),
+# ale domyślnie wszyscy są 'person' => 💡nie jest potrzebne, ale zostawie na przyszłośc, gdybym chciala dodac inne opcje
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPE_CHOICES,
@@ -24,8 +28,9 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.get_user_type_display()})"
     
-    def is_community(self):
-        return self.user_type == 'community'
+    # juz niepotrzebne - wszyscy uzytkownicy to 'osoby'
+    # def is_community(self):
+    #     return self.user_type == 'community'
     
-    def is_person(self):
-        return self.user_type == 'person'
+    # def is_person(self):
+    #     return self.user_type == 'person'

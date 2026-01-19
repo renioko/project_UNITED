@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Apps
-    'communities',
+    # 'communities',
     'accounts',
     # Django-allauth wymaga 'sites' framework
     'django.contrib.sites',
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',  # Opcjonalnie - dla Google/Facebook login w przyszłości
+    'communities.apps.CommunitiesConfig', # - zamiast 'communities'
 ]
 
 MIDDLEWARE = [
