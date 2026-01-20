@@ -1,0 +1,163 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Mój profil - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Lewa kolumna - Dane osobowe -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <!-- Zdjęcie profilowe -->
+                {% if profile.photo_url %}
+                <img src="{{ profile.photo_url }}" 
+                    alt="{{ profile.first_name }}" 
+                    class="rounded-circle mb-3"
+                    style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                <div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center mb-3"
+                    style="width: 150px; height: 150px; font-size: 48px;">
+                    {{ profile.first_name|first|upper|default:"?" }}
+                </div>
+                {% endif %}
+                
+                <h3>{{ profile.first_name }} {{ profile.last_name }}</h3>
+                <p class="text-muted">@{{ user.username }}</p>
+                
+                {% if profile.city %}
+                <p class="mb-2">
+                    📍 {{ profile.city }}
+                </p>
+                {% endif %}
+                
+                <p class="text-muted small">
+                    Członek od {{ user.date_joined|date:"d.m.Y" }}
+                </p>
+                
+                <!-- Przycisk edycji -->
+                <a href="{% url 'communities:profile_edit' %}" class="btn btn-primary w-100 mt-3">
+                    ✏️ Edytuj profil
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statystyki -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Statystyki</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>Wspólnoty:</strong> {{ memberships.count }}
+                    </li>
+                    <li class="mb-2">
+                        <strong>Zarządzam:</strong> {{ managed_communities.count }}
+                    </li>
+                    <li class="mb-2">
+                        <strong>Email:</strong> 
+                        {{ user.email }}
+                        {% if user.emailaddress_set.first.verified %}
+                        <span class="badge bg-success">✓</span>
+                        {% else %}
+                        <span class="badge bg-warning">!</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Prawa kolumna - Szczegóły -->
+    <div class="col-md-8">
+        <!-- O mnie -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">O mnie</h5>
+                {% if profile.bio %}
+                <p>{{ profile.bio|linebreaks }}</p>
+                {% else %}
+                <p class="text-muted">Uzupełnij swoją biografię, aby inni mogli Cię poznać.</p>
+                <a href="{% url 'communities:profile_edit' %}" class="btn btn-sm btn-outline-primary">
+                    Dodaj bio
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Wspólnoty którymi zarządzam -->
+        {% if managed_communities %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Zarządzam wspólnotami ({{ managed_communities.count }})</h5>
+                
+                <div class="list-group list-group-flush">
+                    {% for membership in managed_communities %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{% url 'communities:community_detail' membership.community.pk %}">
+                                        {{ membership.community.name }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ membership.community.city }}</small>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary">{{ membership.get_role_display }}</span>
+                                <a href="#" class="btn btn-sm btn-outline-secondary ms-2">
+                                    Zarządzaj
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Wszystkie moje wspólnoty -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Moje wspólnoty ({{ memberships.count }})</h5>
+                    <a href="{% url 'communities:community_list' %}" class="btn btn-sm btn-primary">
+                        + Znajdź wspólnotę
+                    </a>
+                </div>
+                
+                {% if memberships %}
+                <div class="list-group list-group-flush">
+                    {% for membership in memberships %}
+                    <a href="{% url 'communities:community_detail' membership.community.pk %}" 
+                        class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ membership.community.name }}</h6>
+                                <small class="text-muted">{{ membership.community.city }}</small>
+                            </div>
+                            <div class="text-end">
+                                {% if membership.role != 'member' %}
+                                <span class="badge bg-info">{{ membership.get_role_display }}</span>
+                                <br>
+                                {% endif %}
+                                <small class="text-muted">
+                                    Od {{ membership.joined_date|date:"d.m.Y" }}
+                                </small>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted mb-3">Nie należysz jeszcze do żadnej wspólnoty.</p>
+                    <a href="{% url 'communities:community_list' %}" class="btn btn-primary">
+                        Przeglądaj wspólnoty
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

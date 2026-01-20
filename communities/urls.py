@@ -10,4 +10,6 @@ urlpatterns = [
     path('', views.HomeView.as_view(), name='home'), # Strona główna
     path('communities/', views.CommunityListView.as_view(), name='community_list'),  # Lista
     path('communities/<int:pk>/', views.CommunityDetailView.as_view(), name='community_detail'), # Szczegóły
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
 ]

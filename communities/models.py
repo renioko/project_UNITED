@@ -264,7 +264,7 @@ class Membership(models.Model):
         on_delete=models.CASCADE,
         limit_choices_to={'user_type': 'person'}, # TYLKO osoby mogą być członkami
         related_name='memberships',
-        verbose_name='Osoba'
+        verbose_name='Członkowstwo'
     )
     
     community = models.ForeignKey(

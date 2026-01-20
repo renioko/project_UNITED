@@ -29,8 +29,11 @@ class CustomUser(AbstractUser):
         return f"{self.username} ({self.get_user_type_display()})"
     
     # juz niepotrzebne - wszyscy uzytkownicy to 'osoby'
+    # Metody pomocnicze - ZOSTAJĄ (dla kompatybilności)
+    def is_person(self):
+        """Sprawdź czy użytkownik to osoba."""
+        return self.user_type == 'person'
+    
+    # is_community() można zostawić (choć nie będzie używane):
     # def is_community(self):
     #     return self.user_type == 'community'
-    
-    # def is_person(self):
-    #     return self.user_type == 'person'

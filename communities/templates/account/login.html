@@ -31,11 +31,11 @@
                             Nazwa użytkownika lub email
                         </label>
                         <input type="text" 
-                               name="login" 
-                               class="form-control {% if form.login.errors %}is-invalid{% endif %}"
-                               placeholder="Username lub email"
-                               value="{{ form.login.value|default:'' }}"
-                               required>
+                                name="login" 
+                                class="form-control {% if form.login.errors %}is-invalid{% endif %}"
+                                placeholder="Username lub email"
+                                value="{{ form.login.value|default:'' }}"
+                                required>
                         {% if form.login.errors %}
                         <div class="invalid-feedback">
                             {{ form.login.errors }}
@@ -49,10 +49,10 @@
                             Hasło
                         </label>
                         <input type="password" 
-                               name="password" 
-                               class="form-control {% if form.password.errors %}is-invalid{% endif %}"
-                               placeholder="Twoje hasło"
-                               required>
+                                name="password" 
+                                class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+                                placeholder="Twoje hasło"
+                                required>
                         {% if form.password.errors %}
                         <div class="invalid-feedback">
                             {{ form.password.errors }}
@@ -63,9 +63,9 @@
                     <!-- Zapamiętaj mnie -->
                     <div class="mb-3 form-check">
                         <input type="checkbox" 
-                               name="remember" 
-                               class="form-check-input" 
-                               id="id_remember">
+                                name="remember" 
+                                class="form-check-input" 
+                                id="id_remember">
                         <label class="form-check-label" for="id_remember">
                             Zapamiętaj mnie
                         </label>

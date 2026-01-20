@@ -70,7 +70,7 @@ ROOT_URLCONF = 'portal_united.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], #💡sugestia ChatGPT - moze trzeba bedzie zmienic
+        'DIRS': [BASE_DIR / 'communities/templates'], #💡sugestia ChatGPT - moze trzeba bedzie zmienic
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

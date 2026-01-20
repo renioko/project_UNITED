@@ -141,6 +141,13 @@ który obsługuje dwa typy użytkowników: Osoby i Wspólnoty.
 
 WAŻNE: NIE importujemy nic z allauth.account.forms, żeby uniknąć circular import!
 Zamiast tego definiujemy wszystkie pola ręcznie.
+
+    UPROSZCZENIE REJESTRACJI:  -> poprawka
+    - Pole user_type ZOSTAJE w modelu (dla kompatybilności)
+    - ALE wybór został usunięty z formularza
+    - Wszyscy nowi użytkownicy automatycznie dostają user_type='person'
+    - Wspólnoty są tworzone przez formularz "Stwórz wspólnotę" po zalogowaniu
+
 """
 
 from django import forms
@@ -152,13 +159,16 @@ User = get_user_model()
 
 class CustomSignupForm(forms.Form):
     """
-    Formularz rejestracji z wyborem typu użytkownika.
+    Formularz rejestracji - tylko dla osób.
     
     Django-allauth automatycznie używa tego formularza gdy ustawimy:
     ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
     
     Musimy zdefiniować wszystkie pola ręcznie (username, email, password)
     ponieważ nie możemy dziedziczyć z BaseSignupForm (circular import).
+
+    WAŻNE: Pole user_type NIE jest w formularzu (użytkownik nie wybiera).
+    W metodzie signup() automatycznie ustawiamy user_type='person'.
     """
     
     # ========================================================================
@@ -205,17 +215,18 @@ class CustomSignupForm(forms.Form):
     # ========================================================================
     # POLA CUSTOM - specyficzne dla naszej aplikacji
     # ========================================================================
-    
-    user_type = forms.ChoiceField(
-        choices=[
-            ('person', 'Osoba indywidualna'),
-            ('community', 'Wspólnota')
-        ],
-        label='Typ konta',
-        widget=forms.RadioSelect,
-        initial='person',
-        help_text='Wybierz czy rejestrujesz się jako osoba czy jako wspólnota.'
-    )
+    # USUWAM WYBÓR, OD TERAZ kazdy uzykownik = 'person'. Zostawiam to pole dla kompatybilności i na przyszłość
+    # user_type = forms.ChoiceField(
+    #     choices=[
+    #         ('person', 'Osoba indywidualna'),
+    #         ('community', 'Wspólnota')
+    #     ],
+    #     label='Typ konta',
+    #     widget=forms.RadioSelect,
+    #     initial='person',
+    #     help_text='Wybierz czy rejestrujesz się jako osoba czy jako wspólnota.'
+    # )
+    # user_type = 'person' ❓ niżej przypiszemy więc nie trzeba wybierac
     
     # Pole dla osób
     first_name = forms.CharField(
@@ -227,17 +238,26 @@ class CustomSignupForm(forms.Form):
             'placeholder': 'Twoje imię'
         })
     )
+    # last_name = forms.CharField(
+    #     max_length=100,
+    #     required=False,
+    #     label='nazwisko',
+    #     widget=forms.TextInput(attrs={
+    #         'class': 'form-control',
+    #         'placeholder': 'Twoje nazwisko'
+    #     })
+    # ) ❓💡zostawic czy usunac??
     
-    # Pole dla wspólnot
-    community_name = forms.CharField(
-        max_length=200,
-        required=False,
-        label='Nazwa wspólnoty',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Pełna nazwa Twojej wspólnoty'
-        })
-    )
+    # Pole dla wspólnot - USUNIĘTO - wspólnoty nie są rodzajem uzytkownika
+    # community_name = forms.CharField(
+    #     max_length=200,
+    #     required=False,
+    #     label='Nazwa wspólnoty',
+    #     widget=forms.TextInput(attrs={
+    #         'class': 'form-control',
+    #         'placeholder': 'Pełna nazwa Twojej wspólnoty'
+    #     })
+    # )
     
     # ========================================================================
     # WALIDACJA FORMULARZA
@@ -287,18 +307,24 @@ class CustomSignupForm(forms.Form):
             if len(password1) < 8:
                 raise forms.ValidationError('Hasło musi mieć minimum 8 znaków.')
         
-        # Sprawdź czy wypełniono odpowiednie pole w zależności od typu
-        user_type = cleaned_data.get('user_type')
+        # Sprawdź imię
         first_name = cleaned_data.get('first_name')
-        community_name = cleaned_data.get('community_name')
-        
-        if user_type == 'person' and not first_name:
+        if not first_name:
             self.add_error('first_name', 'Proszę podać imię.')
         
-        if user_type == 'community' and not community_name:
-            self.add_error('community_name', 'Proszę podać nazwę wspólnoty.')
-        
         return cleaned_data
+    
+    # TO USUNIETO -user_type jest tylko 'person'
+        # user_type = cleaned_data.get('user_type')
+        # community_name = cleaned_data.get('community_name')
+        
+        # if user_type == 'person' and not first_name:
+        #     self.add_error('first_name', 'Proszę podać imię.')
+        
+        # if user_type == 'community' and not community_name:
+        #     self.add_error('community_name', 'Proszę podać nazwę wspólnoty.')
+        
+        # return cleaned_data
     
     # ========================================================================
     # ZAPISYWANIE UŻYTKOWNIKA
@@ -318,28 +344,32 @@ class CustomSignupForm(forms.Form):
         user_type = self.cleaned_data['user_type']
         
         # Ustaw typ użytkownika
-        user.user_type = user_type
+        # user.user_type = user_type
+        # ZMIANA: AUTOMATYCZNIE ustaw user_type na 'person'
+        # (użytkownik nie miał wyboru w formularzu)
+        user.user_type = 'person'
         user.save()
         
-        # Stwórz odpowiedni profil
-        if user_type == 'person':
+        # # Stwórz odpowiedni profil
+        # if user_type == 'person':
             # Import tu (nie na górze) żeby uniknąć circular imports
-            from communities.models import PersonProfile
-            
-            PersonProfile.objects.create(
-                user=user,
-                first_name=self.cleaned_data.get('first_name', '')
-            )
-        
-        elif user_type == 'community':
-            # Import tu (nie na górze) żeby uniknąć circular imports
-            from communities.models import CommunityProfile
-            
-            CommunityProfile.objects.create(
-                user=user,
-                name=self.cleaned_data.get('community_name', user.username),
-                description='Opis do uzupełnienia',  # Placeholder
-                city='Do uzupełnienia',  # User wypełni później w profilu
-            )
+            # from communities.models import PersonProfile
+        # elif user_type == 'community':
+        #     # Import tu (nie na górze) żeby uniknąć circular imports
+        #     from communities.models import CommunityProfile
+
+        # Stwórz profil osoby
+        from communities.models import PersonProfile
+
+        PersonProfile.objects.create(
+            user=user,
+            first_name=self.cleaned_data.get('first_name', '')
+        )
+            # CommunityProfile.objects.create(
+            #     user=user,
+            #     name=self.cleaned_data.get('community_name', user.username),
+            #     description='Opis do uzupełnienia',  # Placeholder
+            #     city='Do uzupełnienia',  # User wypełni później w profilu
+            # )
         
         # Nie trzeba return - allauth już ma obiekt user
