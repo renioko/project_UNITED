@@ -12,4 +12,6 @@ urlpatterns = [
     path('communities/<int:pk>/', views.CommunityDetailView.as_view(), name='community_detail'), # Szczegóły
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
+    path('communities/<int:pk>/join/', views.join_community, name='join_community'),
+    path('communities/<int:pk>/leave/', views.leave_community, name='leave_community'),
 ]

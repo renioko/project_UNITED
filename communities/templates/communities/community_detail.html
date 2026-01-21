@@ -57,10 +57,74 @@
                 {% endif %}
                 
                 <hr>
+                            
+            <!-- SEKCJA CZŁONKOSTWA - NOWA LOGIKA -->
+            
+            {% if user.is_authenticated %}
+                <!-- Użytkownik ZALOGOWANY -->
                 
-                <button class="btn btn-success w-100">Dołącz do wspólnoty</button>
-                <small class="text-muted d-block mt-2">Wymaga zalogowania</small>
-            </div>
+                {% if is_member %}
+                    <!-- Jest członkiem -->
+                    <div class="alert alert-success mb-3">
+                        <strong>✓ Jesteś członkiem tej wspólnoty</strong>
+                        {% if user_membership.role != 'member' %}
+                        <br>
+                        <span class="badge bg-info mt-1">{{ user_membership.get_role_display }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if can_leave %}
+                        <!-- Może opuścić (nie jest owner/admin) -->
+                        <form method="post" action="{% url 'communities:leave_community' community.pk %}" 
+                            onsubmit="return confirm('Czy na pewno chcesz opuścić tę wspólnotę?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                Opuść wspólnotę
+                            </button>
+                        </form>
+                        <small class="text-muted d-block mt-2">
+                            Możesz wrócić w każdej chwili
+                        </small>
+                    {% else %}
+                        <!-- Nie może opuścić (owner/admin) -->
+                        <p class="text-muted small mb-0">
+                            Jako {{ user_membership.get_role_display }} nie możesz opuścić wspólnoty. 
+                            Skontaktuj się z administratorem jeśli chcesz przekazać uprawnienia.
+                        </p>
+                    {% endif %}
+                    
+                {% else %}
+                    <!-- NIE jest członkiem - pokaż przycisk "Dołącz" -->
+                    <form method="post" action="{% url 'communities:join_community' community.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100">
+                            ➕ Dołącz do wspólnoty
+                        </button>
+                    </form>
+                    <small class="text-muted d-block mt-2">
+                        Dołącz aby uczestniczyć w życiu wspólnoty
+                    </small>
+                {% endif %}
+                
+            {% else %}
+                <!-- Użytkownik NIEZALOGOWANY -->
+                <div class="alert alert-info">
+                    <strong>Chcesz dołączyć?</strong>
+                    <p class="mb-2 small">Zaloguj się lub zarejestruj aby dołączyć do tej wspólnoty.</p>
+                </div>
+                
+                <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-primary w-100 mb-2">
+                    Zaloguj się
+                </a>
+                <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn btn-outline-primary w-100">
+                    Zarejestruj się
+                </a>
+            {% endif %}
+        
+                
+                <!-- <button class="btn btn-success w-100">Dołącz do wspólnoty</button>
+                <small class="text-muted d-block mt-2">Wymaga zalogowania</small> -->
+            <!-- </div> -->
         </div>
     </div>
 </div>

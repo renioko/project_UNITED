@@ -1,11 +1,131 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, ListView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from .models import CommunityProfile, Tag, PersonProfile, Membership
 
+
+@login_required
+@require_POST  # Tylko POST request (bezpieczeństwo - nie da się kliknąć w link GET)
+def join_community(request, pk):
+    """
+    Dołącz do wspólnoty.
+
+    Logika:
+    - Sprawdź czy użytkownik NIE jest już członkiem
+    - Stwórz Membership z rolą 'member'
+    - Przekieruj z komunikatem sukcesu
+    
+    @login_required - wymaga zalogowania (przekierowuje do /accounts/login/)
+    @require_POST - tylko POST (nie GET) - bezpieczeństwo CSRF
+    """
+    
+    # Pobierz wspólnotę (lub 404 jeśli nie istnieje)
+    community = get_object_or_404(CommunityProfile, pk=pk, is_active=True)
+    
+    # Sprawdź czy wspólnota akceptuje nowych członków (możesz dodać to pole później)
+    # if not community.accepting_members:
+    #     messages.error(request, 'Ta wspólnota nie przyjmuje obecnie nowych członków.')
+    #     return redirect('communities:community_detail', pk=community.pk)
+
+    # Sprawdź czy użytkownik ma PersonProfile
+    if not hasattr(request.user, 'person_profile'):
+        messages.error(
+            request,
+            'Musisz uzupełnić swój profil zanim dołączysz do wspólnoty.'
+        )
+        return redirect('communities:profile_edit')
+    
+    # Sprawdź czy użytkownik już jest członkiem
+    already_member = Membership.objects.filter(
+        person=request.user,
+        community=community,
+        is_active=True 
+    ).exists()
+    
+    if already_member:
+        # Już jest członkiem - nie dodawaj ponownie
+        messages.warning(
+            request, 
+            f'Już należysz do wspólnoty "{community.name}".'
+        )
+    else:
+        # Stwórz nowe członkostwo
+        Membership.objects.create(
+            person=request.user,
+            community=community,
+            role='member',  # Domyślnie zwykły członek
+            is_active=True # 💡na przyszlosc - mozna zrobic False i aktywowac
+        )
+        
+        messages.success(
+            request,
+            f'🎉 Gratulacje! Dołączyłeś do wspólnoty "{community.name}"!'
+        )
+    
+    # Przekieruj z powrotem do profilu wspólnoty
+    return redirect('communities:community_detail', pk=community.pk)
+
+
+@login_required
+@require_POST
+def leave_community(request, pk):
+    """
+    Opuść wspólnotę.
+    
+    Logika:
+    - Sprawdź czy użytkownik jest członkiem
+    - Usuń lub dezaktywuj Membership
+    - Przekieruj z komunikatem
+    
+    UWAGA: Owner (założyciel) nie może opuścić - musi najpierw przekazać uprawnienia!
+    """
+    
+    community = get_object_or_404(CommunityProfile, pk=pk, is_active=True)
+    
+    # Sprawdź czy użytkownik jest członkiem
+    try:
+        membership = Membership.objects.get(
+            person=request.user,
+            community=community,
+            is_active=True
+        )
+    except Membership.DoesNotExist:
+        # Nie jest członkiem
+        messages.warning(
+            request,
+            f'Nie należysz do wspólnoty "{community.name}".'
+        )
+        return redirect('communities:community_detail', pk=community.pk)
+    
+    # Sprawdź czy to nie owner/admin (nie mogą opuścić bez przekazania uprawnień)
+    if membership.role in ['owner', 'admin']:
+        messages.error(
+            request,
+            f'Nie możesz opuścić wspólnoty jako {membership.get_role_display()}. '
+            f'Najpierw przekaż uprawnienia innemu członkowi lub skontaktuj się z administratorem.'
+        )
+        return redirect('communities:community_detail', pk=community.pk)
+    
+    # Opuść wspólnotę - usuń membership
+    # OPCJA A: Całkowite usunięcie (bez historii)
+    membership.delete()
+    
+    # OPCJA B: Dezaktywacja (zachowaj historię)
+    # membership.is_active = False
+    # membership.save()
+    
+    messages.info(
+        request,
+        f'Opuściłeś wspólnotę "{community.name}". Możesz dołączyć ponownie w każdej chwili.'
+    )
+    
+    # Przekieruj do listy wspólnot (bo już nie jest członkiem)
+    return redirect('communities:community_list')
 
 class HomeView(TemplateView):
     """Strona główna"""
@@ -63,14 +183,36 @@ class CommunityDetailView(DetailView):
     def get_queryset(self):
         """Tylko aktywne wspólnoty"""
         # return CommunityProfile.objects.filter(is_active=True).select_related('user').prefetch_related('tags')
-        return CommunityProfile.objects.filter(is_active=True).prefetch_related('tags')
+        return CommunityProfile.objects.filter(is_active=True).select_related('created_by').prefetch_related('tags')
     
     def get_context_data(self, **kwargs):
-        """Dodaj członków do kontekstu"""
+        """Dodaj członków i status członkostwa do kontekstu"""
         context = super().get_context_data(**kwargs)
         context['members'] = self.object.memberships.filter(
             is_active=True
         ).select_related('person__person_profile').order_by('-joined_date')
+
+        # NOWE - sprawdź czy zalogowany użytkownik jest członkiem
+        if self.request.user.is_authenticated:
+            try:
+                # Spróbuj znaleźć membership
+                membership = self.object.memberships.get(
+                    person=self.request.user,
+                    is_active=True
+                )
+                context['user_membership'] = membership
+                context['is_member'] = True
+                context['can_leave'] = membership.role not in ['owner', 'admin']
+            except Membership.DoesNotExist:
+                # Nie jest członkiem
+                context['user_membership'] = None
+                context['is_member'] = False
+                context['can_leave'] = False
+        else:
+            # Użytkownik niezalogowany
+            context['user_membership'] = None
+            context['is_member'] = False
+            context['can_leave'] = False
         return context
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -151,43 +293,3 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Profil został zaktualizowany!')
         return super().form_valid(form)
 
-# MOJA PROBA MAŁPOWANIA:
-# class ProfileView(DetailView):
-#     model = PersonProfile
-#     template_name = 'communities/person_detail.html'
-#     context_object_name = 'user_profile'
-
-#     def get_queryset(self):
-#         '''Tylko aktywni uzytkownicy'''
-#         return PersonProfile.objects.filter(is_active=True).select_related('user').prefetch_related('tags')
-    
-#     def get_context_data(self, **kwargs):
-#         context =  super().get_context_data(**kwargs)
-#         context['members'] = self.object.membership.filter(is_active=True).select_related('person__person_profile').order_by('-joined_date')
-#         return context
-    
-#     def get_template_names(self):
-#         """
-#         Wybierz template w zależności od typu użytkownika.
-#         Aktualnie wszyscy to 'person', ale to pozostaje dla przyszłości.
-#         """
-#         if self.request.user.user_type == 'person':
-#             return ['communities/profile_person.html']
-#         # elif self.request.user.user_type == 'moderator':  # Przyszłość
-#         #     return ['communities/profile_moderator.html']
-#         else:
-#             # Fallback (nie powinno się zdarzyć)
-#             return ['communities/profile_person.html']
-    
-# ====================================================
-## **Teraz templates - najprostsza wersja:**
-
-# **Struktura folderów:**
-# ```
-# communities/
-# └── templates/
-#     └── communities/
-#         ├── base.html           # Bazowy template
-#         ├── home.html           # Strona główna
-#         ├── community_list.html # Lista
-#         └── community_detail.html # Szczegóły
