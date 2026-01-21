@@ -4,10 +4,10 @@ from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView, ListView, DetailView, UpdateView
+from django.views.generic import TemplateView, ListView, DetailView, UpdateView, CreateView
 from django.urls import reverse_lazy
 from .models import CommunityProfile, Tag, PersonProfile, Membership
-
+from .forms import CommunityCreateForm
 
 @login_required
 @require_POST  # Tylko POST request (bezpieczeństwo - nie da się kliknąć w link GET)
@@ -69,7 +69,6 @@ def join_community(request, pk):
     
     # Przekieruj z powrotem do profilu wspólnoty
     return redirect('communities:community_detail', pk=community.pk)
-
 
 @login_required
 @require_POST
@@ -293,3 +292,64 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Profil został zaktualizowany!')
         return super().form_valid(form)
 
+class CommunityCreateView(LoginRequiredMixin, CreateView):
+    """
+    Widok tworzenia nowej wspólnoty.
+    
+    CreateView to generic view Django do tworzenia obiektów.
+    Automatycznie:
+    - Wyświetla formularz (GET)
+    - Obsługuje zapisywanie (POST)
+    - Waliduje dane
+    - Przekierowuje po sukcesie
+    
+    LoginRequiredMixin = tylko zalogowani użytkownicy mogą tworzyć wspólnoty
+    """
+    
+    model = CommunityProfile
+    form_class = CommunityCreateForm
+    template_name = 'communities/community_create.html'
+    
+    def form_valid(self, form):
+        """
+        Wywoływane gdy formularz jest poprawnie wypełniony.
+        
+        Tu ustawiamy created_by (twórca wspólnoty) na current user.
+        """
+        
+        # Nie zapisuj jeszcze do bazy (commit=False)
+        community = form.save(commit=False)
+        
+        # Ustaw twórcę na zalogowanego użytkownika
+        community.created_by = self.request.user
+        
+        # Teraz zapisz do bazy
+        community.save()
+        
+        # Zapisz relacje ManyToMany (tagi)
+        # WAŻNE: form.save_m2m() musi być AFTER save()
+        form.save_m2m()
+        
+        # SIGNAL automatycznie utworzy Membership z rolą 'owner'!
+        # (sprawdź communities/signals.py)
+        
+        # Komunikat sukcesu
+        messages.success(
+            self.request,
+            f'🎉 Wspólnota "{community.name}" została utworzona! Jesteś jej właścicielem (owner).'
+        )
+        
+        # Przekieruj do profilu nowo utworzonej wspólnoty
+        self.success_url = reverse_lazy('communities:community_detail', kwargs={'pk': community.pk})
+        
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """
+        Wywoływane gdy formularz ma błędy.
+        """
+        messages.error(
+            self.request,
+            'Wystąpiły błędy w formularzu. Sprawdź poprawność danych.'
+        )
+        return super().form_invalid(form)

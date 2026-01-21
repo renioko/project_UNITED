@@ -82,7 +82,18 @@
                 {% endif %}
             </div>
         </div>
-        
+        <div class="alert alert-info mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Chcesz założyć nową wspólnotę?</strong>
+                    <p class="mb-0 small">Stwórz profil wspólnoty i zaproś członków!</p>
+                </div>
+                <a href="{% url 'communities:community_create' %}" class="btn btn-primary">
+                    ➕ Utwórz wspólnotę
+                </a>
+            </div>
+        </div>
+    </div>
         <!-- Wspólnoty którymi zarządzam -->
         {% if managed_communities %}
         <div class="card mb-4">

@@ -1,0 +1,237 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Utwórz wspólnotę - Portal UNITED{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-2">Utwórz nową wspólnotę</h2>
+                <p class="text-muted mb-4">
+                    Wypełnij formularz aby utworzyć profil Twojej wspólnoty. 
+                    Automatycznie staniesz się jej właścicielem (owner) i będziesz mógł zarządzać członkami.
+                </p>
+                
+                <!-- Wyświetl komunikaty błędów -->
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <form method="post" id="communityForm">
+                    {% csrf_token %}
+                    
+                    <!-- SEKCJA 1: Podstawowe informacje -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">📝 Podstawowe informacje</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Nazwa -->
+                                <div class="col-md-12 mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        {{ form.name.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Krótki opis -->
+                                <div class="col-md-12 mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        {{ form.description.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.description }}
+                                    <small class="form-text text-muted">{{ form.description.help_text }}</small>
+                                    {% if form.description.errors %}
+                                    <div class="text-danger">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Miasto -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">
+                                        {{ form.city.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                    <div class="text-danger">{{ form.city.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Parafia -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.parish.id_for_label }}" class="form-label">
+                                        {{ form.parish.label }}
+                                    </label>
+                                    {{ form.parish }}
+                                    {% if form.parish.errors %}
+                                    <div class="text-danger">{{ form.parish.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SEKCJA 2: Denominacja i charakter -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">⛪ Denominacja i charakter</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Denominacja -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.denomination.id_for_label }}" class="form-label">
+                                        {{ form.denomination.label }}
+                                    </label>
+                                    {{ form.denomination }}
+                                    {% if form.denomination.errors %}
+                                    <div class="text-danger">{{ form.denomination.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Inna denominacja -->
+                                <div class="col-md-6 mb-3" id="denomination_other_field">
+                                    <label for="{{ form.denomination_other.id_for_label }}" class="form-label">
+                                        {{ form.denomination_other.label }}
+                                    </label>
+                                    {{ form.denomination_other }}
+                                    {% if form.denomination_other.errors %}
+                                    <div class="text-danger">{{ form.denomination_other.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Tagi -->
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">
+                                        {{ form.tags.label }}
+                                    </label>
+                                    <div class="row">
+                                        {% for checkbox in form.tags %}
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                {{ checkbox.tag }}
+                                                <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                                    {{ checkbox.choice_label }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="form-text text-muted">{{ form.tags.help_text }}</small>
+                                    {% if form.tags.errors %}
+                                    <div class="text-danger">{{ form.tags.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SEKCJA 3: Kontakt (opcjonalne) -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">📞 Dane kontaktowe (opcjonalne)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Email -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.contact_email.id_for_label }}" class="form-label">
+                                        {{ form.contact_email.label }}
+                                    </label>
+                                    {{ form.contact_email }}
+                                </div>
+                                
+                                <!-- Telefon -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.contact_phone.id_for_label }}" class="form-label">
+                                        {{ form.contact_phone.label }}
+                                    </label>
+                                    {{ form.contact_phone }}
+                                </div>
+                                
+                                <!-- Website -->
+                                <div class="col-md-12 mb-3">
+                                    <label for="{{ form.website.id_for_label }}" class="form-label">
+                                        {{ form.website.label }}
+                                    </label>
+                                    {{ form.website }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SEKCJA 4: Zdjęcia (opcjonalne) -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">📷 Zdjęcia (opcjonalne)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Zdjęcie główne -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.photo_url.id_for_label }}" class="form-label">
+                                        {{ form.photo_url.label }}
+                                    </label>
+                                    {{ form.photo_url }}
+                                    <small class="form-text text-muted">{{ form.photo_url.help_text }}</small>
+                                </div>
+                                
+                                <!-- Logo -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.logo_url.id_for_label }}" class="form-label">
+                                        {{ form.logo_url.label }}
+                                    </label>
+                                    {{ form.logo_url }}
+                                    <small class="form-text text-muted">{{ form.logo_url.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Przyciski -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'communities:community_list' %}" class="btn btn-secondary">
+                            Anuluj
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            ✨ Utwórz wspólnotę
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript - pokaż/ukryj pole "Inna denominacja" -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const denominationSelect = document.getElementById('{{ form.denomination.id_for_label }}');
+    const denominationOtherField = document.getElementById('denomination_other_field');
+    
+    function toggleDenominationOther() {
+        if (denominationSelect.value === 'other') {
+            denominationOtherField.style.display = 'block';
+        } else {
+            denominationOtherField.style.display = 'none';
+        }
+    }
+    
+    // Wywołaj na start
+    toggleDenominationOther();
+    
+    // Nasłuchuj zmian
+    denominationSelect.addEventListener('change', toggleDenominationOther);
+});
+</script>
+{% endblock %}
