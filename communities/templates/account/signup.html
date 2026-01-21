@@ -25,15 +25,6 @@
                     </div>
                     {% endif %}
                     
-                    <!-- Typ użytkownika -->
-                    <!-- <div class="mb-3">
-                        <label class="form-label">{{ form.user_type.label }}</label>
-                        {{ form.user_type }}
-                        {% if form.user_type.errors %}
-                        <div class="text-danger">{{ form.user_type.errors }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">{{ form.user_type.help_text }}</small>
-                    </div> -->
                     
                     <!-- Username -->
                     <div class="mb-3">
@@ -78,16 +69,6 @@
                         <div class="text-danger">{{ form.last_name.errors }}</div>
                         {% endif %}
                     </div>
-                    <!-- Nazwa wspólnoty (dla wspólnoty) -->
-                    <!-- <div class="mb-3" id="community_name_field" style="display:none;">
-                        <label for="{{ form.community_name.id_for_label }}" class="form-label">
-                            {{ form.community_name.label }}
-                        </label>
-                        {{ form.community_name }}
-                        {% if form.community_name.errors %}
-                        <div class="text-danger">{{ form.community_name.errors }}</div>
-                        {% endif %}
-                    </div> -->
                     
                     <!-- Hasło -->
                     <div class="mb-3">
@@ -125,32 +106,4 @@
     </div>
 </div>
 
-<!-- JavaScript - pokazuj odpowiednie pola w zależności od typu użytkownika -->
-<!-- <script>
-// Pobierz radio buttons typu użytkownika
-const userTypeRadios = document.querySelectorAll('input[name="user_type"]');
-const firstNameField = document.getElementById('first_name_field');
-const communityNameField = document.getElementById('community_name_field');
-
-// Funkcja pokazująca odpowiednie pole
-function toggleFields() {
-    const selectedType = document.querySelector('input[name="user_type"]:checked').value;
-    
-    if (selectedType === 'person') {
-        firstNameField.style.display = 'block';
-        communityNameField.style.display = 'none';
-    } else if (selectedType === 'community') {
-        firstNameField.style.display = 'none';
-        communityNameField.style.display = 'block';
-    }
-}
-
-// Nasłuchuj zmiany wyboru
-userTypeRadios.forEach(radio => {
-    radio.addEventListener('change', toggleFields);
-});
-
-// Wywołaj na start (pokaż odpowiednie pole dla domyślnie zaznaczonego)
-toggleFields();
-</script> -->
 {% endblock %}

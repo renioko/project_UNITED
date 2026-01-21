@@ -42,19 +42,10 @@ class CommunityProfile(models.Model):
         ('methodist', 'Metodystyczna'),
         ('charismatic', 'Charyzmatyczna'),
         ('other', 'Inna'),
+    )
     # === USUNIĘTE: user = OneToOneField ===
     # Wspólnota nie ma już bezpośredniej relacji do User!
     # Zamiast tego, relacja jest przez Membership (z rolami)
-    
-    # Podstawowe informacje (strona główna)
-    )
-    # user = models.OneToOneField(
-    #     settings.AUTH_USER_MODEL,
-    #     on_delete=models.CASCADE,
-    #     limit_choices_to={'user_type': 'community'},
-    #     related_name='community_profile',
-    #     verbose_name='Użytkownik'
-    # )
     
     # Podstawowe informacje (strona główna)
     name = models.CharField(max_length=200, verbose_name='Nazwa wspólnoty')

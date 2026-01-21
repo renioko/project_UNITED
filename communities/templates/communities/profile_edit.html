@@ -28,10 +28,10 @@
                             Imię <span class="text-danger">*</span>
                         </label>
                         <input type="text" 
-                               name="first_name" 
-                               value="{{ form.first_name.value|default:'' }}"
-                               class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
-                               required>
+                            name="first_name" 
+                            value="{{ form.first_name.value|default:'' }}"
+                            class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                            required>
                         {% if form.first_name.errors %}
                         <div class="invalid-feedback">{{ form.first_name.errors }}</div>
                         {% endif %}
@@ -43,9 +43,9 @@
                             Nazwisko
                         </label>
                         <input type="text" 
-                               name="last_name" 
-                               value="{{ form.last_name.value|default:'' }}"
-                               class="form-control">
+                            name="last_name" 
+                            value="{{ form.last_name.value|default:'' }}"
+                            class="form-control">
                     </div>
                     
                     <!-- Miasto -->
@@ -54,10 +54,10 @@
                             Miasto
                         </label>
                         <input type="text" 
-                               name="city" 
-                               value="{{ form.city.value|default:'' }}"
-                               class="form-control"
-                               placeholder="Np. Kraków">
+                            name="city" 
+                            value="{{ form.city.value|default:'' }}"
+                            class="form-control"
+                            placeholder="Np. Kraków">
                     </div>
                     
                     <!-- Bio -->
@@ -66,9 +66,9 @@
                             O mnie
                         </label>
                         <textarea name="bio" 
-                                  class="form-control" 
-                                  rows="4"
-                                  placeholder="Opowiedz coś o sobie...">{{ form.bio.value|default:'' }}</textarea>
+                                class="form-control" 
+                                rows="4"
+                                placeholder="Opowiedz coś o sobie...">{{ form.bio.value|default:'' }}</textarea>
                         <small class="form-text text-muted">
                             Krótki opis, zainteresowania, doświadczenie w służbie...
                         </small>
@@ -80,10 +80,10 @@
                             URL zdjęcia profilowego
                         </label>
                         <input type="url" 
-                               name="photo_url" 
-                               value="{{ form.photo_url.value|default:'' }}"
-                               class="form-control"
-                               placeholder="https://example.com/moje-zdjecie.jpg">
+                            name="photo_url" 
+                            value="{{ form.photo_url.value|default:'' }}"
+                            class="form-control"
+                            placeholder="https://example.com/moje-zdjecie.jpg">
                         <small class="form-text text-muted">
                             Podaj link do zdjęcia (później dodamy upload plików)
                         </small>
