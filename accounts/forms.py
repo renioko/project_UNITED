@@ -341,7 +341,7 @@ class CustomSignupForm(forms.Form):
         Tu ustawiamy user_type i tworzymy odpowiedni profil.
         """
         # Pobierz dane z formularza
-        user_type = self.cleaned_data['user_type']
+        # user_type = self.cleaned_data['user_type'] #🚩zakodowane
         
         # Ustaw typ użytkownika
         # user.user_type = user_type

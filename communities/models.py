@@ -104,7 +104,7 @@ class CommunityProfile(models.Model):
     # NOWE POLE - kto stworzył wspólnotę (dla historii) - zamiast user
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.SET_NULL, # 💡na przyszłośc lepiej zeby zostawała nazwa uzytkowenika, ktory zalozyl
         null=True,
         blank=True,
         related_name='created_communities',
