@@ -140,9 +140,27 @@ class CommunityListView(ListView):
     paginate_by = 12  # 12 wspólnot na stronę
 
     def get_queryset(self):
-        """Filtrowanie wspólnot"""
-        # queryset = CommunityProfile.objects.filter(is_active=True).select_related('user')
-        queryset = CommunityProfile.objects.filter(is_active=True)
+        """
+        Filtrowanie wspólnot na podstawie parametrów GET.
+        
+        Obsługuje:
+        - search: wyszukiwanie po nazwie i opisie
+        - city: filtrowanie po mieście
+        - denomination: filtrowanie po denominacji
+        - tags: filtrowanie po tagach (można wybrać wiele)
+        """
+
+        queryset = CommunityProfile.objects.filter(is_active=True).select_related('created_by').prefetch_related('tags')
+
+        # Wyszukiwanie po nazwie i opisie
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) | 
+                Q(description__icontains=search) |
+                Q(city__icontains=search)
+            )
+
         # Filtrowanie po mieście
         city = self.request.GET.get('city')
         if city:
@@ -153,10 +171,17 @@ class CommunityListView(ListView):
         if denomination:
             queryset = queryset.filter(denomination=denomination)
         
-        # Filtrowanie po tagach
-        tag_slug = self.request.GET.get('tag')
-        if tag_slug:
-            queryset = queryset.filter(tags__slug=tag_slug)
+        # Filtrowanie po tagach (można wybrać wiele)
+        # Pobierz listę ID tagów z GET (może być wiele)
+        tag_ids = self.request.GET.getlist('tags')  # getlist! nie get
+        if tag_ids:
+            # Filtruj wspólnoty które mają KTÓRYKOLWIEK z wybranych tagów
+            queryset = queryset.filter(tags__id__in=tag_ids).distinct()
+
+        # # Filtrowanie po tagach
+        # tag_slug = self.request.GET.get('tag')
+        # if tag_slug:
+        #     queryset = queryset.filter(tags__slug=tag_slug)
         
         # Wyszukiwanie po nazwie
         search = self.request.GET.get('search')
@@ -166,13 +191,27 @@ class CommunityListView(ListView):
                 Q(description__icontains=search)
             )
         
+        # Sortowanie (opcjonalnie)
+        sort_by = self.request.GET.get('sort', '-created_at')
+        queryset = queryset.order_by(sort_by)
+
         return queryset.distinct()
     
     def get_context_data(self, **kwargs):
         """Dodatkowe dane do template"""
         context = super().get_context_data(**kwargs)
-        context['tags'] = Tag.objects.all()
+
+        # Lista wszystkich tagów (dla formularza)
+        context['all_tags'] = Tag.objects.all().order_by('name')
+        # context['tags'] = Tag.objects.all()
         context['denominations'] = CommunityProfile.DENOMINATION_CHOICES
+
+                # Zachowaj parametry wyszukiwania (dla paginacji i formularza)
+        context['current_search'] = self.request.GET.get('search', '')
+        context['current_city'] = self.request.GET.get('city', '')
+        context['current_denomination'] = self.request.GET.get('denomination', '')
+        context['selected_tags'] = self.request.GET.getlist('tags')
+        
         return context
     
 class CommunityDetailView(DetailView):

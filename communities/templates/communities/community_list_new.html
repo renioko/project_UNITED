@@ -1,0 +1,253 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Lista wspólnot - Portal UNITED{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">Wspólnoty religijne</h1>
+        <p class="text-muted">
+            Znajdź wspólnotę blisko siebie i dołącz do ich działalności
+        </p>
+    </div>
+</div>
+
+<!-- Formularz wyszukiwania i filtrowania -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{% url 'communities:community_list' %}">
+            <div class="row g-3">
+                
+                <!-- Wyszukiwanie po nazwie -->
+                <div class="col-md-6">
+                    <label for="search" class="form-label">🔍 Szukaj wspólnoty</label>
+                    <input type="text" 
+                           name="search" 
+                           id="search"
+                           class="form-control" 
+                           placeholder="Nazwa wspólnoty lub słowo kluczowe..." 
+                           value="{{ current_search }}">
+                    <small class="form-text text-muted">
+                        Szukaj po nazwie, opisie lub mieście
+                    </small>
+                </div>
+                
+                <!-- Miasto -->
+                <div class="col-md-3">
+                    <label for="city" class="form-label">📍 Miasto</label>
+                    <input type="text" 
+                           name="city" 
+                           id="city"
+                           class="form-control" 
+                           placeholder="Np. Kraków" 
+                           value="{{ current_city }}">
+                </div>
+                
+                <!-- Denominacja -->
+                <div class="col-md-3">
+                    <label for="denomination" class="form-label">⛪ Denominacja</label>
+                    <select name="denomination" id="denomination" class="form-select">
+                        <option value="">Wszystkie</option>
+                        {% for value, label in denominations %}
+                        <option value="{{ value }}" 
+                                {% if current_denomination == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+            </div>
+            
+            <!-- Tagi (checkboxy) -->
+            {% if all_tags %}
+            <div class="row mt-3">
+                <div class="col-12">
+                    <label class="form-label">🏷️ Charakter działalności (wybierz tagi)</label>
+                    <div class="row">
+                        {% for tag in all_tags %}
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="tags" 
+                                       value="{{ tag.id }}" 
+                                       id="tag_{{ tag.id }}"
+                                       {% if tag.id|stringformat:"s" in selected_tags %}checked{% endif %}>
+                                <label class="form-check-label" for="tag_{{ tag.id }}">
+                                    {{ tag.name }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <small class="form-text text-muted">
+                        Możesz wybrać wiele tagów - pokażemy wspólnoty pasujące do któregokolwiek z nich
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Przyciski -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        🔍 Szukaj
+                    </button>
+                    <a href="{% url 'communities:community_list' %}" class="btn btn-secondary">
+                        ✖️ Wyczyść filtry
+                    </a>
+                    
+                    <!-- Sortowanie (opcjonalnie) -->
+                    <div class="float-end">
+                        <select name="sort" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                            <option value="-created_at">Najnowsze</option>
+                            <option value="name">Nazwa A-Z</option>
+                            <option value="-name">Nazwa Z-A</option>
+                            <option value="city">Miasto A-Z</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liczba wyników -->
+{% if current_search or current_city or current_denomination or selected_tags %}
+<div class="alert alert-info">
+    <strong>Wyniki wyszukiwania:</strong> 
+    Znaleziono {{ page_obj.paginator.count }} wspólnot{% if page_obj.paginator.count == 0 %}y{% elif page_obj.paginator.count == 1 %}ę{% endif %}
+    
+    {% if current_search %}
+    <br><small>Szukano: "{{ current_search }}"</small>
+    {% endif %}
+    
+    {% if current_city %}
+    <br><small>Miasto: {{ current_city }}</small>
+    {% endif %}
+    
+    {% if current_denomination %}
+    <br><small>Denominacja: {{ current_denomination }}</small>
+    {% endif %}
+    
+    {% if selected_tags %}
+    <br><small>Tagi: wybrano {{ selected_tags|length }}</small>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Lista wspólnot -->
+<div class="row">
+    {% for community in communities %}
+    <div class="col-md-4 col-sm-6 mb-4">
+        <div class="card h-100">
+            <!-- Zdjęcie -->
+            {% if community.photo_url %}
+            <img src="{{ community.photo_url }}" 
+                 class="card-img-top" 
+                 alt="{{ community.name }}" 
+                 style="height: 200px; object-fit: cover;">
+            {% else %}
+            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                 style="height: 200px;">
+                <span class="text-muted display-4">{{ community.name|first|upper }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ community.name }}</h5>
+                <p class="card-text flex-grow-1">{{ community.description|truncatewords:20 }}</p>
+                
+                <!-- Meta info -->
+                <div class="mb-3">
+                    <small class="text-muted">
+                        📍 {{ community.city }}
+                        {% if community.denomination %}
+                        <br>
+                        ⛪ {{ community.get_denomination_display }}
+                        {% endif %}
+                        <br>
+                        👥 {{ community.get_member_count }} członków
+                    </small>
+                </div>
+                
+                <!-- Tagi -->
+                {% if community.tags.all %}
+                <div class="mb-3">
+                    {% for tag in community.tags.all %}
+                    <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Przycisk -->
+                <a href="{% url 'communities:community_detail' community.pk %}" 
+                   class="btn btn-primary mt-auto">
+                    Zobacz profil
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-warning text-center">
+            <h4>Nie znaleziono wspólnot</h4>
+            <p class="mb-3">Spróbuj zmienić kryteria wyszukiwania lub 
+                <a href="{% url 'communities:community_list' %}">wyczyść filtry</a>
+            </p>
+            
+            {% if user.is_authenticated %}
+            <a href="{% url 'communities:community_create' %}" class="btn btn-primary">
+                ➕ Może chcesz założyć nową wspólnotę?
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Paginacja -->
+{% if is_paginated %}
+<nav aria-label="Paginacja wspólnot" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" 
+               href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_denomination %}&denomination={{ current_denomination }}{% endif %}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Pierwsza
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" 
+               href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_denomination %}&denomination={{ current_denomination }}{% endif %}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Poprzednia
+            </a>
+        </li>
+        {% endif %}
+        
+        <li class="page-item active">
+            <span class="page-link">
+                Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" 
+               href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_denomination %}&denomination={{ current_denomination }}{% endif %}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Następna
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" 
+               href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_denomination %}&denomination={{ current_denomination }}{% endif %}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Ostatnia
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}
