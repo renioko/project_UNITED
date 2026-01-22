@@ -1,0 +1,182 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Zarządzanie - {{ community.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Lewa kolumna - Menu zarządzania -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">⚙️ Zarządzanie</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'communities:community_manage' community.pk %}" 
+                    class="list-group-item list-group-item-action active">
+                    👥 Członkowie
+                </a>
+                <a href="{% url 'communities:community_edit' community.pk %}" 
+                    class="list-group-item list-group-item-action">
+                    ✏️ Edytuj profil
+                </a>
+                <a href="{% url 'communities:community_detail' community.pk %}" 
+                    class="list-group-item list-group-item-action">
+                    👁️ Zobacz profil publiczny
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statystyki -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6>Statystyki</h6>
+                <ul class="list-unstyled small">
+                    <li><strong>Członków:</strong> {{ total_members }}</li>
+                    <li><strong>Właścicieli:</strong> {{ owners.count }}</li>
+                    <li><strong>Adminów:</strong> {{ admins.count }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Prawa kolumna - Lista członków -->
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Członkowie wspólnoty/zarządzanie </h4>
+            </div>
+            <div class="card-body">
+                
+                <!-- Właściciele (Owners) -->
+                {% if owners %}
+                <h5 class="text-primary mt-3">👑 Właściciele ({{ owners.count }})</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Członek</th>
+                                <th>Rola</th>
+                                <th>Od kiedy</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in owners %}
+                            {% include 'communities/_member_row.html' %}
+                            {% endfor %}
+                            {% for membership in owners %}
+                            <!-- <tr>
+                                <td>
+                                    <strong>{{ membership.person.person_profile.first_name }} {{ membership.person.person_profile.last_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">@{{ membership.person.username }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning">Właściciel</span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">Od {{ membership.joined_date|date:"d.m.Y" }}</small>
+                                </td>
+                                <td>
+                                    {% if is_owner and membership.person != user %} -->
+                                    <!-- /zakomentowac/ Owner może zmienić rolę innego ownera -->
+                                    <!-- <button class="btn btn-sm btn-outline-secondary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#roleModal{{ membership.id }}">
+                                        Zmień rolę
+                                    </button>
+                                    {% elif membership.person == user %}
+                                    <span class="text-muted small">To Ty</span>
+                                    {% endif %}
+                                </td>
+                            </tr> -->
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                <!-- Administratorzy -->
+                {% if admins %}
+                <h5 class="text-info mt-4">⚙️ Administratorzy ({{ admins.count }})</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Członek</th>
+                                <th>Rola</th>
+                                <th>Od kiedy</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in admins %}
+                            {% include 'communities/_member_row.html' %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                <!-- Liderzy -->
+                {% if leaders %}
+                <h5 class="text-success mt-4">🌟 Liderzy ({{ leaders.count }})</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Członek</th>
+                                <th>Rola</th>
+                                <th>Od kiedy</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in leaders %}
+                            {% include 'communities/_member_row.html' %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                <!-- Członkowie -->
+                {% if members %}
+                <h5 class="mt-4">👤 Członkowie ({{ members.count }})</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Członek</th>
+                                <th>Rola</th>
+                                <th>Od kiedy</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in members %}
+                            {% include 'communities/_member_row.html' %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if not owners and not admins and not leaders and not members %}
+                <div class="alert alert-info">
+                    <p class="mb-0">Brak członków do wyświetlenia.</p>
+                </div>
+                {% endif %}
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale zmiany roli (dla każdego członka) -->
+{% for membership in owners %}{% include 'communities/_role_modal.html' %}{% endfor %}
+{% for membership in admins %}{% include 'communities/_role_modal.html' %}{% endfor %}
+{% for membership in leaders %}{% include 'communities/_role_modal.html' %}{% endfor %}
+{% for membership in members %}{% include 'communities/_role_modal.html' %}{% endfor %}
+
+{% endblock %}

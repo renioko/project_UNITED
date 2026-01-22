@@ -17,4 +17,9 @@ urlpatterns = [
     # ... join/leave ...
     path('communities/<int:pk>/join/', views.join_community, name='join_community'),
     path('communities/<int:pk>/leave/', views.leave_community, name='leave_community'),
+    # Zarządzanie wspólnotą (tylko owner/admin)
+    path('communities/<int:pk>/edit/', views.CommunityEditView.as_view(), name='community_edit'),
+    path('communities/<int:pk>/manage/', views.CommunityManageView.as_view(), name='community_manage'),
+    path('communities/<int:pk>/member/<int:membership_id>/change-role/', views.change_member_role, name='change_member_role'),
+    path('communities/<int:pk>/member/<int:membership_id>/remove/', views.remove_member, name='remove_member'),
 ]

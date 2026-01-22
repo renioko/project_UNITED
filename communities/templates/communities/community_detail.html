@@ -1,131 +1,259 @@
 {% extends 'communities/base.html' %}
 
-{% block title %}{{ community.name }}{% endblock %}
+{% block title %}{{ community.name }} - Portal UNITED {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        {% if community.photo_url %}
-        <img src="{{ community.photo_url }}" class="img-fluid rounded mb-4" alt="{{ community.name }}">
-        {% endif %}
-        
-        <h1>{{ community.name }}</h1>
-        <p class="lead">{{ community.description }}</p>
-        
-        <div class="mb-3">
-            {% for tag in community.tags.all %}
-            <span class="badge bg-primary">{{ tag.name }}</span>
-            {% endfor %}
-        </div>
-        
-        <hr>
-        
-        <h3>O wspólnocie</h3>
-        <p>{{ community.full_description|default:"Brak szczegółowego opisu." }}</p>
-        
-        <h3 class="mt-4">Członkowie ({{ members.count }})</h3>
-        <ul class="list-group">
-            {% for membership in members %}
-            <li class="list-group-item">
-                {{ membership.person.person_profile.first_name }} 
-                {% if membership.role != 'member' %}
-                <span class="badge bg-info">{{ membership.get_role_display }}</span>
-                {% endif %}
-            </li>
-            {% empty %}
-            <li class="list-group-item">Brak członków.</li>
-            {% endfor %}
-        </ul>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Informacje kontaktowe</h5>
-                <p><strong>Miasto:</strong> {{ community.city }}</p>
-                {% if community.parish %}
-                <p><strong>Parafia:</strong> {{ community.parish }}</p>
-                {% endif %}
-                {% if community.denomination %}
-                <p><strong>Denominacja:</strong> {{ community.get_denomination_display }}</p>
-                {% endif %}
-                {% if community.contact_email %}
-                <p><strong>Email:</strong> <a href="mailto:{{ community.contact_email }}">{{ community.contact_email }}</a></p>
-                {% endif %}
-                {% if community.website %}
-                <p><strong>Strona WWW:</strong> <a href="{{ community.website }}" target="_blank">Odwiedź</a></p>
-                {% endif %}
-                
-                <hr>
-                            
-            <!-- SEKCJA CZŁONKOSTWA - NOWA LOGIKA -->
-            
-            {% if user.is_authenticated %}
-                <!-- Użytkownik ZALOGOWANY -->
-                
-                {% if is_member %}
-                    <!-- Jest członkiem -->
-                    <div class="alert alert-success mb-3">
-                        <strong>✓ Jesteś członkiem tej wspólnoty</strong>
-                        {% if user_membership.role != 'member' %}
-                        <br>
-                        <span class="badge bg-info mt-1">{{ user_membership.get_role_display }}</span>
-                        {% endif %}
-                    </div>
-                    
-                    {% if can_leave %}
-                        <!-- Może opuścić (nie jest owner/admin) -->
-                        <form method="post" action="{% url 'communities:leave_community' community.pk %}" 
-                            onsubmit="return confirm('Czy na pewno chcesz opuścić tę wspólnotę?');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger w-100">
-                                Opuść wspólnotę
-                            </button>
-                        </form>
-                        <small class="text-muted d-block mt-2">
-                            Możesz wrócić w każdej chwili
-                        </small>
-                    {% else %}
-                        <!-- Nie może opuścić (owner/admin) -->
-                        <p class="text-muted small mb-0">
-                            Jako {{ user_membership.get_role_display }} nie możesz opuścić wspólnoty. 
-                            Skontaktuj się z administratorem jeśli chcesz przekazać uprawnienia.
-                        </p>
-                    {% endif %}
-                    
-                {% else %}
-                    <!-- NIE jest członkiem - pokaż przycisk "Dołącz" -->
-                    <form method="post" action="{% url 'communities:join_community' community.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-success w-100">
-                            ➕ Dołącz do wspólnoty
-                        </button>
-                    </form>
-                    <small class="text-muted d-block mt-2">
-                        Dołącz aby uczestniczyć w życiu wspólnoty
-                    </small>
-                {% endif %}
-                
-            {% else %}
-                <!-- Użytkownik NIEZALOGOWANY -->
-                <div class="alert alert-info">
-                    <strong>Chcesz dołączyć?</strong>
-                    <p class="mb-2 small">Zaloguj się lub zarejestruj aby dołączyć do tej wspólnoty.</p>
-                </div>
-                
-                <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-primary w-100 mb-2">
-                    Zaloguj się
-                </a>
-                <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn btn-outline-primary w-100">
-                    Zarejestruj się
-                </a>
+    <div class="row">
+        <!-- Lewa kolumna - Zdjęcie i podstawowe info -->
+        <div class="col-md-8">
+
+            <!-- Zdjęcie główne -->
+            {% if community.photo_url %}
+            <img src="{{ community.photo_url }}" class="img-fluid rounded mb-4" alt="{{ community.name }}">
             {% endif %}
+
+            <!-- Nazwa i opis -->
+            <h1>{{ community.name }}</h1>
+            <p class="lead">{{ community.description }}</p>
+
+            <!-- Tagi -->
+            <div class="mb-3">
+                {% for tag in community.tags.all %}
+                <span class="badge bg-primary">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            
+            
+            <hr>
+
+            <!-- Pełny opis -->
+            <h3>O wspólnocie</h3>
+            <p>{{ community.full_description|default:"Brak szczegółowego opisu." }}</p>
+            
+            <!-- Członkowie -->
+            <h3 class="mt-4">Członkowie ({{ members.count }})</h3>
+
+
+            {% if members %}
+            <div class="row">
+            <!-- <ul class="list-group"> -->
+                {% for membership in members %}
+                <!-- <li class="list-group-item"> -->
+                <div class="col-md-6 mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3"
+                            style="width: 50px; height: 50px; font-size: 20px;">
+                            {{ membership.person.person_profile.first_name|first|upper }}
+                        </div>
+                        <div>
+                            <strong>{{ membership.person.person_profile.first_name }} {{ membership.person.person_profile.last_name }}</strong>
+                            {% if membership.role != 'member' %}
+                            <br>
+                            <span class="badge 
+                                {% if membership.role == 'owner' %}bg-warning text-dark
+                                {% elif membership.role == 'admin' %}bg-info
+                                {% elif membership.role in 'leader,service_leader' %}bg-success
+                                {% endif %}">
+                                {{ membership.get_role_display }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Brak członków do wyświetlenia.</p>
+            {% endif %}
+        </div>
+
+        <!-- Prawa kolumna - Sidebar z info i akcjami -->
         
-                
-                <!-- <button class="btn btn-success w-100">Dołącz do wspólnoty</button>
-                <small class="text-muted d-block mt-2">Wymaga zalogowania</small> -->
-            <!-- </div> -->
+        <div class="col-md-4">
+
+            <!-- Logo -->
+            {% if community.logo_url %}
+            <div class="text-center mb-4">
+                <img src="{{ community.logo_url }}" 
+                    alt="Logo {{ community.name }}"
+                    class="img-fluid"
+                    style="max-height: 150px;">
+            </div>
+            {% endif %}
+
+            <!-- Karta z informacjami -->
+            <div class="card">
+                <!-- <div class="card-body">
+                    <h5 class="card-title">Informacje</h5>
+                    <p><strong>Miasto:</strong> {{ community.city }}</p>
+                    {% if community.parish %}
+                    <p><strong>Parafia:</strong> {{ community.parish }}</p>
+                    {% endif %}
+                    {% if community.denomination %}
+                    <p><strong>Denominacja:</strong> {{ community.get_denomination_display }}</p>
+                    {% endif %}
+                    {% if community.contact_email %}
+                    <p><strong>Email:</strong> <a href="mailto:{{ community.contact_email }}">{{ community.contact_email }}</a></p>
+                    {% endif %}
+                    {% if community.website %}
+                    <p><strong>Strona WWW:</strong> <a href="{{ community.website }}" target="_blank">Odwiedź</a></p>
+                    {% endif %}
+                </div> -->
+                <div class="card-body">
+                    <h5 class="card-title">Informacje</h5>
+                    
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>📍 Miasto:</strong> {{ community.city }}
+                        </li>
+                        
+                        {% if community.parish %}
+                        <li class="mb-2">
+                            <strong>⛪ Parafia:</strong> {{ community.parish }}
+                        </li>
+                        {% endif %}
+                        
+                        {% if community.denomination %}
+                        <li class="mb-2">
+                            <strong>✝️ Denominacja:</strong> 
+                            {{ community.get_denomination_display }}
+                            {% if community.denomination == 'other' and community.denomination_other %}
+                            ({{ community.denomination_other }})
+                            {% endif %}
+                        </li>
+                        {% endif %}
+                        
+                        {% if community.address %}
+                        <li class="mb-2">
+                            <strong>🏠 Adres:</strong><br>
+                            {{ community.address }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <hr>
+
+                    <h6>Kontakt</h6>
+                    <ul class="list-unstyled small">
+                        {% if community.contact_email %}
+                        <li class="mb-2">
+                            <strong>📧 Email:</strong><br>
+                            <a href="mailto:{{ community.contact_email }}">{{ community.contact_email }}</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if community.contact_phone %}
+                        <li class="mb-2">
+                            <strong>📞 Telefon:</strong><br>
+                            {{ community.contact_phone }}
+                        </li>
+                        {% endif %}
+                        
+                        {% if community.website %}
+                        <li class="mb-2">
+                            <strong>🌐 Strona WWW:</strong><br>
+                            <a href="{{ community.website }}" target="_blank" rel="noopener">
+                                Odwiedź stronę
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    {% if not community.contact_email and not community.contact_phone and not community.website %}
+                    <p class="text-muted small mb-0">Brak danych kontaktowych.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Przyciski zarządzania (dla owner/admin/leader) -->
+            {% if user.is_authenticated and is_member %}
+                {% if user_membership.role in 'owner,admin,leader' %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">Zarządzanie</h6>
+                        <a href="{% url 'communities:community_manage' community.pk %}" 
+                        class="btn btn-primary w-100 mb-2">
+                            ⚙️ Zarządzaj wspólnotą
+                        </a>
+                        <a href="{% url 'communities:community_edit' community.pk %}" 
+                        class="btn btn-outline-primary w-100">
+                            ✏️ Edytuj profil
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}     
+
+            <!-- Karta członkostwa - przyciski Dołącz/Opuść -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Członkostwo</h6>
+                    
+                    {% if user.is_authenticated %}
+                        <!-- Użytkownik ZALOGOWANY -->
+                        
+                        {% if is_member %}
+                            <!-- Jest członkiem -->
+                            <div class="alert alert-success mb-3">
+                                <strong>✓ Jesteś członkiem tej wspólnoty</strong>
+                                {% if user_membership.role != 'member' %}
+                                <br>
+                                <span class="badge bg-info mt-1">{{ user_membership.get_role_display }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            {% if can_leave %}
+                                <!-- Może opuścić (nie jest owner/admin) -->
+                                <form method="post" action="{% url 'communities:leave_community' community.pk %}" 
+                                    onsubmit="return confirm('Czy na pewno chcesz opuścić tę wspólnotę?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger w-100">
+                                        Opuść wspólnotę
+                                    </button>
+                                </form>
+                                <small class="text-muted d-block mt-2">
+                                    Możesz wrócić w każdej chwili
+                                </small>
+                            {% else %}
+                                <!-- Nie może opuścić (owner/admin) -->
+                                <p class="text-muted small mb-0">
+                                    Jako {{ user_membership.get_role_display }} nie możesz opuścić wspólnoty. 
+                                    Skontaktuj się z innym administratorem jeśli chcesz przekazać uprawnienia.
+                                </p>
+                            {% endif %}
+                            
+                        {% else %}
+                            <!-- NIE jest członkiem - pokaż przycisk "Dołącz" -->
+                            <p class="mb-3">Dołącz aby uczestniczyć w życiu wspólnoty</p>
+                            <form method="post" action="{% url 'communities:join_community' community.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100">
+                                    ➕ Dołącz do wspólnoty
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                    {% else %}
+                        <!-- Użytkownik NIEZALOGOWANY -->
+                        <div class="alert alert-info">
+                            <strong>Chcesz dołączyć?</strong>
+                            <p class="mb-2 small">Zaloguj się lub zarejestruj aby dołączyć do tej wspólnoty.</p>
+                        </div>
+                        
+                        <a href="{% url 'account_login' %}?next={{ request.path }}" 
+                        class="btn btn-primary w-100 mb-2">
+                            Zaloguj się
+                        </a>
+                        <a href="{% url 'account_signup' %}?next={{ request.path }}" 
+                        class="btn btn-outline-primary w-100">
+                            Zarejestruj się
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
+
+
+

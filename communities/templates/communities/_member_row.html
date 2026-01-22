@@ -1,0 +1,71 @@
+<!-- Wiersz tabeli dla jednego członka -->
+<tr>
+    <td>
+        <strong>
+            {{ membership.person.person_profile.first_name }} 
+            {{ membership.person.person_profile.last_name }}
+        </strong>
+        <br>
+        <small class="text-muted">@{{ membership.person.username }}</small>
+    </td>
+    <td>
+        <span class="badge 
+            {% if membership.role == 'owner' %}bg-warning text-dark
+            {% elif membership.role == 'admin' %}bg-info
+            {% elif membership.role == 'leader' %}bg-success
+            {% elif membership.role == 'service_leader' %}bg-success
+            {% else %}bg-secondary
+            {% endif %}">
+            {{ membership.get_role_display }}
+        </span>
+    </td>
+    <td>
+        <small class="text-muted">{{ membership.joined_date|date:"d.m.Y" }}</small>
+    </td>
+    <td class="text-end">
+        {% if membership.person != user %}
+            <!-- Przyciski akcji tylko jeśli to nie current user -->
+            
+            <!-- Zmiana roli - TYLKO dla owner/admin (NIE dla leader) -->
+            {% if is_owner or is_admin %}
+            <button class="btn btn-sm btn-outline-primary" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#roleModal{{ membership.id }}">
+                Zmień rolę
+            </button>
+            {% endif %}
+            
+            <!-- Usunięcie członka -->
+            {% if is_owner or is_admin %}
+                <!-- Owner/Admin może usunąć wszystkich (oprócz owner) -->
+                {% if membership.role != 'owner' %}
+                <form method="post" 
+                    action="{% url 'communities:remove_member' community.pk membership.id %}" 
+                    style="display:inline;"
+                    onsubmit="return confirm('Czy na pewno chcesz usunąć tego członka?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
+                        Usuń
+                    </button>
+                </form>
+                {% endif %}
+            {% elif user_membership.role == 'leader' %}
+                <!-- Leader może usunąć tylko zwykłych członków -->
+                {% if membership.role == 'member' %}
+                <form method="post" 
+                    action="{% url 'communities:remove_member' community.pk membership.id %}" 
+                    style="display:inline;"
+                    onsubmit="return confirm('Czy na pewno chcesz usunąć tego członka?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
+                        Usuń
+                    </button>
+                </form>
+                {% endif %}
+            {% endif %}
+        {% else %}
+            <!-- To current user -->
+            <span class="text-muted small">To Ty</span>
+        {% endif %}
+    </td>
+</tr>

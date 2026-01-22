@@ -1,0 +1,110 @@
+<!-- Modal zmiany roli dla {{ membership.person.username }} -->
+<div class="modal fade" id="roleModal{{ membership.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Zmiana roli - {{ membership.person.person_profile.first_name }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'communities:change_member_role' community.pk membership.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>
+                        Wybierz nową rolę dla użytkownika 
+                        <strong>{{ membership.person.username }}</strong>:
+                    </p>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                value="member" id="role_member_{{ membership.id }}"
+                                {% if membership.role == 'member' %}checked{% endif %}>
+                            <label class="form-check-label" for="role_member_{{ membership.id }}">
+                                <strong>Członek</strong>
+                                <br>
+                                <small class="text-muted">Podstawowe uprawnienia - może brać udział w wydarzeniach</small>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                value="service_leader" id="role_service_{{ membership.id }}"
+                                {% if membership.role == 'service_leader' %}checked{% endif %}>
+                            <label class="form-check-label" for="role_service_{{ membership.id }}">
+                                <strong>Lider diakonii</strong>
+                                <br>
+                                <small class="text-muted">Organizuje posługi i działania charytatywne</small>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                value="leader" id="role_leader_{{ membership.id }}"
+                                {% if membership.role == 'leader' %}checked{% endif %}>
+                            <label class="form-check-label" for="role_leader_{{ membership.id }}">
+                                <strong>Lider</strong>
+                                <br>
+                                <small class="text-muted">Zarządza członkami i organizuje wydarzenia</small>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    {% if is_owner %}
+                    <!-- Tylko owner może nadawać admin/owner -->
+                    <hr>
+                    <p class="text-warning small">
+                        <strong>⚠️ Zaawansowane role (tylko dla właściciela):</strong>
+                    </p>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                value="admin" id="role_admin_{{ membership.id }}"
+                                {% if membership.role == 'admin' %}checked{% endif %}>
+                            <label class="form-check-label" for="role_admin_{{ membership.id }}">
+                                <strong class="text-info">Administrator</strong>
+                                <br>
+                                <small class="text-muted">Pełne uprawnienia do zarządzania wspólnotą (oprócz nadawania owner)</small>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="role" 
+                                value="owner" id="role_owner_{{ membership.id }}"
+                                {% if membership.role == 'owner' %}checked{% endif %}>
+                            <label class="form-check-label" for="role_owner_{{ membership.id }}">
+                                <strong class="text-warning">Właściciel</strong>
+                                <br>
+                                <small class="text-muted">Wszystkie uprawnienia włącznie z nadawaniem ról owner (będzie dwóch właścicieli!)</small>
+                            </label>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Admin nie może nadawać admin/owner -->
+                    <hr>
+                    <p class="text-muted small">
+                        Jako administrator możesz nadawać role do poziomu Lider. 
+                        Role Admin i Właściciel może nadać tylko obecny właściciel.
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Anuluj
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        💾 Zmień rolę
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

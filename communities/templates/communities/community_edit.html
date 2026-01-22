@@ -1,0 +1,221 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Edytuj wspólnotę - {{ community.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Lewa kolumna - Menu -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">⚙️ Zarządzanie</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'communities:community_manage' community.pk %}" 
+                    class="list-group-item list-group-item-action">
+                    👥 Członkowie
+                </a>
+                <a href="{% url 'communities:community_edit' community.pk %}" 
+                    class="list-group-item list-group-item-action active">
+                    ✏️ Edytuj profil
+                </a>
+                <a href="{% url 'communities:community_detail' community.pk %}" 
+                    class="list-group-item list-group-item-action">
+                    👁️ Zobacz profil publiczny
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Prawa kolumna - Formularz -->
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Edycja profilu wspólnoty</h4>
+            </div>
+            <div class="card-body">
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Podstawowe informacje -->
+                    <h5 class="mb-3">📝 Podstawowe informacje</h5>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                            {{ form.name.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="text-danger">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            {{ form.description.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.description }}
+                        <small class="form-text text-muted">Krótki opis (max 500 znaków)</small>
+                        {% if form.description.errors %}
+                        <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.full_description.id_for_label }}" class="form-label">
+                            {{ form.full_description.label }}
+                        </label>
+                        {{ form.full_description }}
+                        <small class="form-text text-muted">Rozbudowany opis działalności wspólnoty</small>
+                        {% if form.full_description.errors %}
+                        <div class="text-danger">{{ form.full_description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.city.id_for_label }}" class="form-label">
+                                {{ form.city.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.city }}
+                            {% if form.city.errors %}
+                            <div class="text-danger">{{ form.city.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.parish.id_for_label }}" class="form-label">
+                                {{ form.parish.label }}
+                            </label>
+                            {{ form.parish }}
+                            {% if form.parish.errors %}
+                            <div class="text-danger">{{ form.parish.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.address.id_for_label }}" class="form-label">
+                            {{ form.address.label }}
+                        </label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                        <div class="text-danger">{{ form.address.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Denominacja -->
+                    <h5 class="mb-3">⛪ Denominacja i charakter</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.denomination.id_for_label }}" class="form-label">
+                                {{ form.denomination.label }}
+                            </label>
+                            {{ form.denomination }}
+                            {% if form.denomination.errors %}
+                            <div class="text-danger">{{ form.denomination.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.denomination_other.id_for_label }}" class="form-label">
+                                {{ form.denomination_other.label }}
+                            </label>
+                            {{ form.denomination_other }}
+                            {% if form.denomination_other.errors %}
+                            <div class="text-danger">{{ form.denomination_other.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.tags.label }}</label>
+                        <div class="row">
+                            {% for checkbox in form.tags %}
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                        {{ checkbox.choice_label }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.tags.errors %}
+                        <div class="text-danger">{{ form.tags.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Kontakt -->
+                    <h5 class="mb-3">📞 Dane kontaktowe</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.contact_email.id_for_label }}" class="form-label">
+                                {{ form.contact_email.label }}
+                            </label>
+                            {{ form.contact_email }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.contact_phone.id_for_label }}" class="form-label">
+                                {{ form.contact_phone.label }}
+                            </label>
+                            {{ form.contact_phone }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.website.id_for_label }}" class="form-label">
+                            {{ form.website.label }}
+                        </label>
+                        {{ form.website }}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Zdjęcia -->
+                    <h5 class="mb-3">📷 Zdjęcia</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.photo_url.id_for_label }}" class="form-label">
+                                {{ form.photo_url.label }}
+                            </label>
+                            {{ form.photo_url }}
+                            <small class="form-text text-muted">URL zdjęcia głównego</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.logo_url.id_for_label }}" class="form-label">
+                                {{ form.logo_url.label }}
+                            </label>
+                            {{ form.logo_url }}
+                            <small class="form-text text-muted">URL logo wspólnoty</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Przyciski -->
+                    <hr class="my-4">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'communities:community_manage' community.pk %}" class="btn btn-secondary">
+                            Anuluj
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            💾 Zapisz zmiany
+                        </button>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

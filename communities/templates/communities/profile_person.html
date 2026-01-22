@@ -82,6 +82,8 @@
                 {% endif %}
             </div>
         </div>
+        
+        <!-- Banner "Utwórz wspólnotę" -->
         <div class="alert alert-info mb-4">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -93,7 +95,7 @@
                 </a>
             </div>
         </div>
-    </div>
+        
         <!-- Wspólnoty którymi zarządzam -->
         {% if managed_communities %}
         <div class="card mb-4">
@@ -113,9 +115,11 @@
                                 <small class="text-muted">{{ membership.community.city }}</small>
                             </div>
                             <div>
+                                <!-- POPRAWIONE: używamy membership.community zamiast community -->
                                 <span class="badge bg-primary">{{ membership.get_role_display }}</span>
-                                <a href="#" class="btn btn-sm btn-outline-secondary ms-2">
-                                    Zarządzaj
+                                <a href="{% url 'communities:community_manage' membership.community.pk %}" 
+                                    class="btn btn-sm btn-outline-secondary ms-2">
+                                    ⚙️ Zarządzaj
                                 </a>
                             </div>
                         </div>

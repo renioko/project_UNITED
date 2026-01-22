@@ -2,12 +2,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Q
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView, ListView, DetailView, UpdateView, CreateView
+from django.views.generic import TemplateView, ListView, DetailView, UpdateView, CreateView, DeleteView
 from django.urls import reverse_lazy
 from .models import CommunityProfile, Tag, PersonProfile, Membership
-from .forms import CommunityCreateForm
+from .forms import CommunityCreateForm, CommunityEditForm
+from .mixins import CommunityAdminRequiredMixin, CommunityOwnerRequiredMixin, CommunityLeaderRequiredMixin
 
 @login_required
 @require_POST  # Tylko POST request (bezpieczeństwo - nie da się kliknąć w link GET)
@@ -353,3 +355,262 @@ class CommunityCreateView(LoginRequiredMixin, CreateView):
             'Wystąpiły błędy w formularzu. Sprawdź poprawność danych.'
         )
         return super().form_invalid(form)
+    
+class CommunityEditView(CommunityLeaderRequiredMixin, UpdateView):
+    """
+    Edycja profilu wspólnoty.
+    
+    Dostęp: owner, admin, leader 
+    """
+    model = CommunityProfile
+    form_class = CommunityEditForm
+    template_name = 'communities/community_edit.html'
+    
+    def get_object(self, queryset=None):
+        """Pobierz wspólnotę (już mamy w self.community z mixina)"""
+        return self.community
+    
+    def get_success_url(self):
+        """Przekieruj do profilu wspólnoty po sukcesie"""
+        return reverse_lazy('communities:community_detail', kwargs={'pk': self.community.pk})
+    
+    def form_valid(self, form):
+        """Komunikat sukcesu"""
+        messages.success(self.request, f'✅ Profil wspólnoty "{self.community.name}" został zaktualizowany.')
+        return super().form_valid(form)
+
+
+class CommunityManageView(CommunityLeaderRequiredMixin, TemplateView):
+    """
+    Dashboard zarządzania wspólnotą.
+    
+    Pokazuje:
+    - Lista członków z możliwością zarządzania
+    - Statystyki
+    - Szybkie akcje
+    
+    Dostęp: owner, admin, leader
+    """
+    template_name = 'communities/community_manage.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Lista członków pogrupowana po rolach
+        context['owners'] = self.community.memberships.filter(
+            role='owner', is_active=True
+        ).select_related('person__person_profile')
+        
+        context['admins'] = self.community.memberships.filter(
+            role='admin', is_active=True
+        ).select_related('person__person_profile')
+        
+        context['leaders'] = self.community.memberships.filter(
+            role__in=['leader', 'service_leader'], is_active=True
+        ).select_related('person__person_profile')
+        
+        context['members'] = self.community.memberships.filter(
+            role='member', is_active=True
+        ).select_related('person__person_profile')
+        
+        # Sprawdź rolę current user (co może robić)
+        user_membership = self.community.memberships.filter(
+            person=self.request.user, is_active=True
+        ).first()
+        
+        context['user_membership'] = user_membership
+        context['is_owner'] = user_membership and user_membership.role == 'owner'
+        context['is_admin'] = user_membership and user_membership.role in ['owner', 'admin']
+        context['is_leader'] = user_membership and user_membership.role in ['owner', 'admin', 'leader']
+
+        # Statystyki
+        context['total_members'] = self.community.get_member_count()
+        
+        return context
+
+
+@login_required
+@require_POST
+def change_member_role(request, pk, membership_id):
+    """
+    Zmiana roli członka wspólnoty.
+    
+    Logika uprawnień:
+    - Owner może zmieniać role wszystkim (włącznie z nadaniem owner)
+    - Admin może zmieniać role do poziomu leader (NIE może nadać admin/owner)
+    - Leader nie może zmieniać ról
+    
+    pk = ID wspólnoty
+    membership_id = ID członkostwa do zmiany
+    """
+    
+    # Pobierz wspólnotę
+    community = get_object_or_404(CommunityProfile, pk=pk, is_active=True)
+    
+    # Pobierz członkostwo które chcemy zmienić
+    membership = get_object_or_404(
+        Membership,
+        pk=membership_id,
+        community=community,
+        is_active=True
+    )
+    
+    # Pobierz członkostwo current user (sprawdzamy jego uprawnienia)
+    try:
+        user_membership = Membership.objects.get(
+            person=request.user,
+            community=community,
+            is_active=True
+        )
+    except Membership.DoesNotExist:
+        messages.error(request, 'Nie jesteś członkiem tej wspólnoty.')
+        return redirect('communities:community_detail', pk=pk)
+    
+    # Pobierz nową rolę z POST
+    new_role = request.POST.get('role')
+    
+    # WALIDACJA UPRAWNIEŃ
+    
+    # Nie można zmienić roli samemu sobie
+    if membership.person == request.user:
+        messages.error(request, 'Nie możesz zmienić własnej roli. Poproś innego admina.')
+        return redirect('communities:community_manage', pk=pk)
+    
+    # NOWE: Leader NIE może zmieniać ról
+    if user_membership.role == 'leader':
+        messages.error(
+            request,
+            'Jako lider nie masz uprawnień do zmiany ról. '
+            'Role może zmieniać tylko właściciel lub administrator.'
+        )
+        return redirect('communities:community_manage', pk=pk)
+
+    # Owner może wszystko
+    if user_membership.role == 'owner':
+        # Owner może nadać każdą rolę
+        if new_role in dict(Membership.ROLE_CHOICES):
+            
+            # SPECJALNY PRZYPADEK: Nadawanie owner
+            if new_role == 'owner':
+                # Ostrzeżenie - teraz będzie dwóch ownerów
+                messages.warning(
+                    request,
+                    f'⚠️ {membership.person.username} został właścicielem (owner). '
+                    f'Teraz jest dwóch właścicieli tej wspólnoty.'
+                )
+            
+            membership.role = new_role
+            membership.save()
+            
+            messages.success(
+                request,
+                f'✅ Zmieniono rolę {membership.person.username} na {membership.get_role_display()}.'
+            )
+        else:
+            messages.error(request, 'Nieprawidłowa rola.')
+    
+    # Admin może zmieniać do leader (NIE admin/owner)
+    elif user_membership.role == 'admin':
+        if new_role in ['member', 'service_leader', 'leader']:
+            membership.role = new_role
+            membership.save()
+            
+            messages.success(
+                request,
+                f'✅ Zmieniono rolę {membership.person.username} na {membership.get_role_display()}.'
+            )
+        else:
+            messages.error(
+                request,
+                'Jako administrator możesz nadawać role tylko do poziomu Leader. '
+                'Role Admin/Owner może nadać tylko właściciel.'
+            )
+    
+    else:
+        # Ani owner ani admin - brak uprawnień
+        messages.error(request, 'Nie masz uprawnień do zmiany ról.')
+    
+    return redirect('communities:community_manage', pk=pk)
+
+
+@login_required
+@require_POST
+def remove_member(request, pk, membership_id):
+    """
+    Usunięcie członka ze wspólnoty.
+    
+    Dostęp: owner, admin
+    
+    - Owner/Admin NIE mogą usunąć samych siebie.
+    - Leader może usunąć tylko zwykłych członków (nie admin/leader/owner)
+    - Owner NIE może być usunięty (musi sam opuścić lub przekazać uprawnienia).
+    """
+    
+    community = get_object_or_404(CommunityProfile, pk=pk, is_active=True)
+    
+    membership = get_object_or_404(
+        Membership,
+        pk=membership_id,
+        community=community,
+        is_active=True
+    )
+        # Pobierz członkostwo current user
+    try:
+        user_membership = Membership.objects.get(
+            person=request.user,
+            community=community,
+            is_active=True
+        )
+    except Membership.DoesNotExist:
+        messages.error(request, 'Nie jesteś członkiem tej wspólnoty.')
+        return redirect('communities:community_detail', pk=pk)
+    
+    # Sprawdź uprawnienia - owner/admin/leader
+    if user_membership.role not in ['owner', 'admin', 'leader']:
+        messages.error(request, 'Nie masz uprawnień do zarządzania członkami.')
+        return redirect('communities:community_detail', pk=pk)
+
+    # # Sprawdź uprawnienia current user
+    # if not community.user_can_edit(request.user):
+    #     messages.error(request, 'Nie masz uprawnień do zarządzania członkami.')
+    #     return redirect('communities:community_detail', pk=pk)
+    
+    # WALIDACJA
+    
+    # Nie można usunąć samego siebie (użyj "Opuść wspólnotę")
+    if membership.person == request.user:
+        messages.error(
+            request,
+            'Nie możesz usunąć samego siebie. Użyj przycisku "Opuść wspólnotę".'
+        )
+        return redirect('communities:community_manage', pk=pk)
+    
+    # Nie można usunąć owner (owner musi sam opuścić lub przekazać uprawnienia)
+    if membership.role == 'owner':
+        messages.error(
+            request,
+            'Nie można usunąć właściciela (owner). '
+            'Właściciel musi sam opuścić wspólnotę lub przekazać uprawnienia.'
+        )
+        return redirect('communities:community_manage', pk=pk)
+    
+    # NOWE: Leader może usunąć tylko zwykłych członków (nie admin/leader)
+    if user_membership.role == 'leader': 
+        if membership.role in ['admin', 'leader', 'service_leader']:
+            messages.error(
+                request,
+                'Jako lider możesz usuwać tylko zwykłych członków. '
+                'Administratorów i innych liderów może usunąć tylko właściciel lub administrator.'
+            )
+            return redirect('communities:community_manage', pk=pk)
+
+    # Usuń członka
+    member_name = membership.person.username
+    membership.delete()
+    
+    messages.success(
+        request,
+        f'✅ Użytkownik {member_name} został usunięty ze wspólnoty.'
+    )
+    
+    return redirect('communities:community_manage', pk=pk)
