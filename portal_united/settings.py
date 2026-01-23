@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from decouple import config
+from decouple import config, Csv
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -172,16 +172,15 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 #         }
 #     }
 # Database configuration
-# Użyj os.environ dla DATABASE_URL (Railway ustawia to jako environment variable)
-DATABASE_URL = os.environ.get('DATABASE_URL')
+
+# Railway przekazuje DATABASE_URL jako system environment variable
+DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Railway/Production - używa DATABASE_URL
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL)
     }
 else:
-    # Lokalne środowisko - używa oddzielnych zmiennych z .env
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
