@@ -172,7 +172,8 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 #         }
 #     }
 # Database configuration
-DATABASE_URL = config('DATABASE_URL', default=None)
+# Użyj os.environ dla DATABASE_URL (Railway ustawia to jako environment variable)
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     # Railway/Production - używa DATABASE_URL
@@ -180,7 +181,7 @@ if DATABASE_URL:
         'default': dj_database_url.parse(DATABASE_URL)
     }
 else:
-    # Lokalne środowisko - używa oddzielnych zmiennych
+    # Lokalne środowisko - używa oddzielnych zmiennych z .env
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
