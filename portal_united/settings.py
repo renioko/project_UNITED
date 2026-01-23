@@ -61,8 +61,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
-    "http://*.railway.app",
-    "https://web-production-fcdf0.up.railway.app/",
+    "https://*.railway.app",  
+    "https://web-production-fcdf0.up.railway.app", 
 ]
 
 # Application definition
@@ -142,9 +142,12 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 #         'PORT': os.getenv('PGPORT'),
 #     }
 # }
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=config('DATABASE_URL', default=f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT', default='5432')}/{config('DB_NAME')}")
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default=f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT', default='5432')}/{config('DB_NAME')}")
+    )
+}
 #     )
 # }
 
@@ -169,25 +172,25 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 #         }
 #     }
 # Database configuration
-DATABASE_URL = config('DATABASE_URL', default=None)
+# DATABASE_URL = config('DATABASE_URL', default=None)
 
-if DATABASE_URL:
-    # Railway/Production - używa DATABASE_URL
-    DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
-    }
-else:
-    # Lokalne środowisko - używa oddzielnych zmiennych
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
-    }
+# if DATABASE_URL:
+#     # Railway/Production - używa DATABASE_URL
+#     DATABASES = {
+#         'default': dj_database_url.parse(DATABASE_URL)
+#     }
+# else:
+#     # Lokalne środowisko - używa oddzielnych zmiennych
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': config('DB_NAME'),
+#             'USER': config('DB_USER'),
+#             'PASSWORD': config('DB_PASSWORD'),
+#             'HOST': config('DB_HOST', default='localhost'),
+#             'PORT': config('DB_PORT', default='5432'),
+#         }
+#     }
 
 
 # Password validation
