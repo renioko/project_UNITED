@@ -178,8 +178,12 @@ DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
+        'default': dj_database_url.parse(DATABASE_URL,  conn_max_age=600)
     }
+    # # Dodaj opcje połączenia dla Railway
+    # DATABASES['default']['OPTIONS'] = {
+    #     'connect_timeout': 10,
+    # }
 else:
     DATABASES = {
         'default': {

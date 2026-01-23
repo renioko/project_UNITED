@@ -8,9 +8,13 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
 """
 
 import os
-
+import time
 from django.core.wsgi import get_wsgi_application
 
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portal_united.settings')
+
+# Poczekaj 3 sekundy na bazę danych (Railway workaround)
+time.sleep(3)
 
 application = get_wsgi_application()
