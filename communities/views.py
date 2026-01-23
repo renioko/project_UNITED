@@ -142,8 +142,10 @@ class CommunityListView(ListView):
     def get_queryset(self):
         """
         Filtrowanie wspólnot na podstawie parametrów GET.
-        
-        Obsługuje:
+
+        Proste wyszukiwanie - jedno pole szuka po wszystkim.
+
+        Wyszukiwanie zaawansowane - bsługuje:
         - search: wyszukiwanie po nazwie i opisie
         - city: filtrowanie po mieście
         - denomination: filtrowanie po denominacji
@@ -158,9 +160,11 @@ class CommunityListView(ListView):
             queryset = queryset.filter(
                 Q(name__icontains=search) | 
                 Q(description__icontains=search) |
-                Q(city__icontains=search)
-            )
+                Q(city__icontains=search) |
+                Q(tags__name__icontains=search)  # Szuka też w tagach!
+            ).distinct()
 
+    # ZAAWANSOWANE wyszukiwanie
         # Filtrowanie po mieście
         city = self.request.GET.get('city')
         if city:
@@ -171,17 +175,21 @@ class CommunityListView(ListView):
         if denomination:
             queryset = queryset.filter(denomination=denomination)
         
-        # Filtrowanie po tagach (można wybrać wiele)
+        # Filtrowanie tag (tylko jeden z dropdown)
+        tag = self.request.GET.get('tag')
+        if tag:
+            queryset = queryset.filter(tags__slug=tag)
+        # # Filtrowanie po tagach
+        # tag_slug = self.request.GET.get('tag')
+        # if tag_slug:
+        #     queryset = queryset.filter(tags__slug=tag_slug)
+        
+        # Filtrowanie po tagach - WYBÓR WIELU -nieaktywne (można wybrać wiele)
         # Pobierz listę ID tagów z GET (może być wiele)
         tag_ids = self.request.GET.getlist('tags')  # getlist! nie get
         if tag_ids:
             # Filtruj wspólnoty które mają KTÓRYKOLWIEK z wybranych tagów
             queryset = queryset.filter(tags__id__in=tag_ids).distinct()
-
-        # # Filtrowanie po tagach
-        # tag_slug = self.request.GET.get('tag')
-        # if tag_slug:
-        #     queryset = queryset.filter(tags__slug=tag_slug)
         
         # Wyszukiwanie po nazwie
         search = self.request.GET.get('search')
@@ -211,7 +219,7 @@ class CommunityListView(ListView):
         context['current_city'] = self.request.GET.get('city', '')
         context['current_denomination'] = self.request.GET.get('denomination', '')
         context['selected_tags'] = self.request.GET.getlist('tags')
-        
+
         return context
     
 class CommunityDetailView(DetailView):
