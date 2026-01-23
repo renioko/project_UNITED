@@ -153,34 +153,14 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 # Jeśli istnieje DATABASE_URL (Railway), użyj jej
 # Jeśli nie (lokalne środowisko), zbuduj z oddzielnych zmiennych
-if config('DATABASE_URL', default=None):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=config('DATABASE_URL')
-        )
-    }
-else:
-    # Lokalna konfiguracja
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
-    }
-# Database configuration
-# DATABASE_URL = config('DATABASE_URL', default=None)
-
-# if DATABASE_URL:
-#     # Railway/Production - używa DATABASE_URL
+# if config('DATABASE_URL', default=None):
 #     DATABASES = {
-#         'default': dj_database_url.parse(DATABASE_URL)
+#         'default': dj_database_url.config(
+#             default=config('DATABASE_URL')
+#         )
 #     }
 # else:
-#     # Lokalne środowisko - używa oddzielnych zmiennych
+#     # Lokalna konfiguracja
 #     DATABASES = {
 #         'default': {
 #             'ENGINE': 'django.db.backends.postgresql',
@@ -191,6 +171,26 @@ else:
 #             'PORT': config('DB_PORT', default='5432'),
 #         }
 #     }
+# Database configuration
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    # Railway/Production - używa DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
+    }
+else:
+    # Lokalne środowisko - używa oddzielnych zmiennych
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 
 # Password validation
