@@ -41,13 +41,23 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
-
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
-
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] #💡potem zmienic
+# ALLOWED_HOSTS
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+# ALLOWED_HOSTS = os.environ.get(
+#     "ALLOWED_HOSTS",
+#     "localhost,127.0.0.1"
+# ).split(",")
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
+# CSRF_TRUSTED_ORIGINS = os.environ.get(
+#     "CSRF_TRUSTED_ORIGINS",
+#     ""
+# ).split(",")
+# CSRF_TRUSTED_ORIGINS = os.getenv(
+#     "CSRF_TRUSTED_ORIGINS",
+#     "http://localhost,http://127.0.0.1"
+# ).split(",")
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
@@ -108,13 +118,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'portal_united.wsgi.application'
 
+
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DB_LIVE = os.getenv('DB_LIVE')
-
-# if DB_LIVE in ['False', False]:
-#     DATABASES = {
+# DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': os.getenv('DB_NAME'),
@@ -122,51 +130,87 @@ DB_LIVE = os.getenv('DB_LIVE')
 #         'PASSWORD': os.getenv('DB_PASSWORD'),
 #         'HOST': 'localhost',
 #         'PORT': '5432',
-#         }
 #     }
-# else:
-#     DATABASES = {
-#         'default': {
+# }
+# DATABASES = {
+#     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': os.getenv('PGDATABASE'),
 #         'USER': os.getenv('PGUSER'),
 #         'PASSWORD': os.getenv('PGPASSWORD'),
-#         'HOST': 'PGHOST',
-#         'PORT': 'PGPORT',
-#         } 
+#         'HOST': os.getenv('PGHOST'),
+#         'PORT': os.getenv('PGPORT'),
 #     }
-# DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
+# }
 
-# lub:  /wersja ze strony Raiway/
-os.environ.setdefault("PGDATABASE", "portal_united")
-os.environ.setdefault("PGUSER", os.getenv('DB_USER'))
-os.environ.setdefault("PGPASSWORD", os.getenv('DB_PASSWORD'))
-os.environ.setdefault("PGHOST", "localhost")
-os.environ.setdefault("PGPORT", "5432")
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=config('DATABASE_URL', default=f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT', default='5432')}/{config('DB_NAME')}")
+#     )
+# }
+#     )
+# }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ["PGDATABASE"],
-        'USER': os.environ["PGUSER"],
-        'PASSWORD': os.environ["PGPASSWORD"],
-        'HOST': os.environ["PGHOST"],
-        'PORT': os.environ["PGPORT"],
+# Jeśli istnieje DATABASE_URL (Railway), użyj jej
+# Jeśli nie (lokalne środowisko), zbuduj z oddzielnych zmiennych
+# if config('DATABASE_URL', default=None):
+#     DATABASES = {
+#         'default': dj_database_url.config(
+#             default=config('DATABASE_URL')
+#         )
+#     }
+# else:
+#     # Lokalna konfiguracja
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': config('DB_NAME'),
+#             'USER': config('DB_USER'),
+#             'PASSWORD': config('DB_PASSWORD'),
+#             'HOST': config('DB_HOST', default='localhost'),
+#             'PORT': config('DB_PORT', default='5432'),
+#         }
+#     }
+# Database configuration
+
+# Railway przekazuje DATABASE_URL jako system environment variable
+
+#debugging 📒✂️
+import os
+import sys
+
+print("=" * 80, file=sys.stderr)
+print("DEBUG: Environment variables check", file=sys.stderr)
+print(f"DATABASE_URL exists: {'DATABASE_URL' in os.environ}", file=sys.stderr)
+print(f"DATABASE_URL starts with: {os.getenv('DATABASE_URL', 'NOT FOUND')[:50]}", file=sys.stderr)
+print("=" * 80, file=sys.stderr)
+# end of debugging
+
+
+
+
+DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL,  conn_max_age=600)
     }
-}
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-# Debug = True - jesli lokalnie ❗💡
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-if DEBUG:
-    STATICFILES_DIRS = [BASE_DIR / "static"]
+    # # Dodaj opcje połączenia dla Railway
+    # DATABASES['default']['OPTIONS'] = {
+    #     'connect_timeout': 10,
+    # }
 else:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
-ALLOWED_HOSTS = ["*"]
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -197,6 +241,14 @@ USE_I18N = True
 
 USE_TZ = True
 
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
+
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # MEDIA FILES (jeśli będziesz uploadować pliki)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -212,7 +264,7 @@ AUTHENTICATION_BACKENDS = [
     # Backend allauth - pozwala na logowanie emailem
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-
+# ============================================================================
 # SITES FRAMEWORK
 # Django-allauth wymaga tego - każda instalacja Django może obsługiwać
 # wiele stron (sites). My mamy jedną.
