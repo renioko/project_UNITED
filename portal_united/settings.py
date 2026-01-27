@@ -174,6 +174,21 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 # Database configuration
 
 # Railway przekazuje DATABASE_URL jako system environment variable
+
+#debugging 📒✂️
+import os
+import sys
+
+print("=" * 80, file=sys.stderr)
+print("DEBUG: Environment variables check", file=sys.stderr)
+print(f"DATABASE_URL exists: {'DATABASE_URL' in os.environ}", file=sys.stderr)
+print(f"DATABASE_URL starts with: {os.getenv('DATABASE_URL', 'NOT FOUND')[:50]}", file=sys.stderr)
+print("=" * 80, file=sys.stderr)
+# end of debugging
+
+
+
+
 DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
