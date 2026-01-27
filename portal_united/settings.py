@@ -111,10 +111,21 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DB_LIVE = os.getenv('DB_LIVE', 'False')
+# ===================================
+# Database configuration
+DATABASE_URL = config('DATABASE_URL', default=None)
 
-if DB_LIVE.lower() == 'false':
-    # lokalna baza
+if DATABASE_URL: # z💡 zmienic warunek na DB_LIVE
+    # Railway/Production - używa DATABASE_URL
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    # Lokalne środowisko - używa oddzielnych zmiennych
     DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -125,19 +136,38 @@ if DB_LIVE.lower() == 'false':
         'PORT': '5432',
         }
     }
-else:
-    # produkcyjna baza (Railway)
-    DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE'),
-        'USER': os.getenv('PGUSER'),
-        'PASSWORD': os.getenv('PGPASSWORD'),
-        'HOST': os.getenv('PGHOST'),
-        'PORT': os.getenv('PGPORT'),
-        } 
-    }
-DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
+# ===================================
+
+# DB_LIVE = os.getenv('DB_LIVE', 'False')
+
+# if DB_LIVE.lower() == 'false':
+#     # lokalna baza
+#     DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         }
+#     }
+# else:
+#     # produkcyjna baza (Railway)
+#     DATABASES = dj_database_url.parse(os.getenv('DATABASE_URL'))
+#     # DATABASES = {
+#     #     'default': {
+#     #     'ENGINE': 'django.db.backends.postgresql',
+#     #     'NAME': os.getenv('PGDATABASE'),
+#     #     'USER': os.getenv('PGUSER'),
+#     #     'PASSWORD': os.getenv('PGPASSWORD'),
+#     #     'HOST': os.getenv('PGHOST'),
+#     #     'PORT': os.getenv('PGPORT'),
+#     #     } 
+#     # }
+# DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
+
+
 
 # # lub:  /wersja ze strony Raiway/
 # os.environ.setdefault("PGDATABASE", "portal_united")
