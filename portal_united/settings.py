@@ -117,9 +117,11 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 # ===================================
 # Database configuration
-DATABASE_URL = config('DATABASE_URL', default=None)
+# DATABASE_URL = config('DATABASE_URL', default=None)
+# if DATABASE_URL: # z💡 zmienic warunek na DB_LIVE
 
-if DATABASE_URL: # z💡 zmienic warunek na DB_LIVE
+DB_LIVE = config('DB_LIVE')
+if DB_LIVE:
     # Railway/Production - używa DATABASE_URL
     DATABASES = {
         "default": dj_database_url.parse(
@@ -140,68 +142,7 @@ else:
         'PORT': '5432',
         }
     }
-# ===================================
 
-# DB_LIVE = os.getenv('DB_LIVE', 'False')
-
-# if DB_LIVE.lower() == 'false':
-#     # lokalna baza
-#     DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME'),
-#         'USER': os.getenv('DB_USER'),
-#         'PASSWORD': os.getenv('DB_PASSWORD'),
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#         }
-#     }
-# else:
-#     # produkcyjna baza (Railway)
-#     DATABASES = dj_database_url.parse(os.getenv('DATABASE_URL'))
-#     # DATABASES = {
-#     #     'default': {
-#     #     'ENGINE': 'django.db.backends.postgresql',
-#     #     'NAME': os.getenv('PGDATABASE'),
-#     #     'USER': os.getenv('PGUSER'),
-#     #     'PASSWORD': os.getenv('PGPASSWORD'),
-#     #     'HOST': os.getenv('PGHOST'),
-#     #     'PORT': os.getenv('PGPORT'),
-#     #     } 
-#     # }
-# DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
-
-
-
-# # lub:  /wersja ze strony Raiway/
-# os.environ.setdefault("PGDATABASE", "portal_united")
-# os.environ.setdefault("PGUSER", os.getenv('DB_USER'))
-# os.environ.setdefault("PGPASSWORD", os.getenv('DB_PASSWORD'))
-# os.environ.setdefault("PGHOST", "localhost")
-# os.environ.setdefault("PGPORT", "5432")
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ["PGDATABASE"],
-#         'USER': os.environ["PGUSER"],
-#         'PASSWORD': os.environ["PGPASSWORD"],
-#         'HOST': os.environ["PGHOST"],
-#         'PORT': os.environ["PGPORT"],
-#     }
-# }
-
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("PGDATABASE"),
-#         "USER": os.getenv("PGUSER"),
-#         "PASSWORD": os.getenv("PGPASSWORD"),
-#         "HOST": os.getenv("PGHOST"),
-#         "PORT": os.getenv("PGPORT"),
-#     }
-# }
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
@@ -260,6 +201,18 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# Email verification - Railway
+if not DEBUG:
+    # Produkcja - Railway
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+    DEFAULT_FROM_EMAIL = 'noreply@projectunited-production.up.railway.app/'  # Zmień później
+    
+    # Ustaw prawidłową domenę dla linków weryfikacyjnych
+    SITE_ID = 1
+else:
+    # Lokalnie
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+
 # SITES FRAMEWORK
 # Django-allauth wymaga tego - każda instalacja Django może obsługiwać
 # wiele stron (sites). My mamy jedną.
@@ -302,7 +255,6 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
 
 # Minimalna długość hasła
 ACCOUNT_PASSWORD_MIN_LENGTH = 8
-
 # Czy pokazywać hasło podczas wpisywania? (bezpieczniej False)
 ACCOUNT_PASSWORD_INPUT_RENDER_VALUE = False
 
@@ -315,18 +267,14 @@ ACCOUNT_SESSION_REMEMBER = True
 
 # Gdzie przekierować po zalogowaniu?
 LOGIN_REDIRECT_URL = '/'
-
 # Gdzie przekierować po wylogowaniu?
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-
 # Gdzie przekierować jeśli użytkownik próbuje dostać się do chronionej strony?
 LOGIN_URL = '/accounts/login/'
 
 # --- Formularze ---
 
-# Czy podczas rejestracji pytać o imię/nazwisko w standardowym formularzu?
-# Ustawimy False bo stworzymy własny formularz ❓
-# Nasz custom formularz rejestracji z wyborem typu użytkownika
+# Custom formularz rejestracji z wyborem typu użytkownika
 ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
 
 
@@ -339,21 +287,22 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Email Configuration
+
+if DB_LIVE:
+    # Lokalnie - wyświetlaj w konsoli
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Produkcja - Gmail SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER')  # Twój Gmail
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')  # App password
+    DEFAULT_FROM_EMAIL = 'Portal UNITED <noreply@portalunited.com>'
 
 
-
-# --- Produkcja (production) - Prawdziwe emaile ---
-# Odkomentować to gdy będziemy wdrażać na serwer i skonfigurować prawdziwy SMTP
-
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'  # Dla Gmail
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'twoj-email@gmail.com'  # Twój email
-# EMAIL_HOST_PASSWORD = 'twoje-haslo-aplikacji'  # Hasło aplikacji (nie zwykłe hasło!)
-# DEFAULT_FROM_EMAIL = 'Portal UNITED <noreply@portalunited.com>'
-
-# Uwaga: Dla Gmail trzeba wygenerować "hasło aplikacji" w ustawieniach konta Google
-# (nie używać zwykłego hasła do konta!)
 

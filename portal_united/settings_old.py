@@ -362,3 +362,69 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Uwaga: Dla Gmail trzeba wygenerować "hasło aplikacji" w ustawieniach konta Google
 # (nie używać zwykłego hasła do konta!)
 
+
+
+#  =================
+# stare zapisy database:
+# ===================================
+
+# DB_LIVE = os.getenv('DB_LIVE', 'False')
+
+# if DB_LIVE.lower() == 'false':
+#     # lokalna baza
+#     DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         }
+#     }
+# else:
+#     # produkcyjna baza (Railway)
+#     DATABASES = dj_database_url.parse(os.getenv('DATABASE_URL'))
+#     # DATABASES = {
+#     #     'default': {
+#     #     'ENGINE': 'django.db.backends.postgresql',
+#     #     'NAME': os.getenv('PGDATABASE'),
+#     #     'USER': os.getenv('PGUSER'),
+#     #     'PASSWORD': os.getenv('PGPASSWORD'),
+#     #     'HOST': os.getenv('PGHOST'),
+#     #     'PORT': os.getenv('PGPORT'),
+#     #     } 
+#     # }
+# DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
+
+
+
+# # lub:  /wersja ze strony Raiway/
+# os.environ.setdefault("PGDATABASE", "portal_united")
+# os.environ.setdefault("PGUSER", os.getenv('DB_USER'))
+# os.environ.setdefault("PGPASSWORD", os.getenv('DB_PASSWORD'))
+# os.environ.setdefault("PGHOST", "localhost")
+# os.environ.setdefault("PGPORT", "5432")
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.environ["PGDATABASE"],
+#         'USER': os.environ["PGUSER"],
+#         'PASSWORD': os.environ["PGPASSWORD"],
+#         'HOST': os.environ["PGHOST"],
+#         'PORT': os.environ["PGPORT"],
+#     }
+# }
+
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("PGDATABASE"),
+#         "USER": os.getenv("PGUSER"),
+#         "PASSWORD": os.getenv("PGPASSWORD"),
+#         "HOST": os.getenv("PGHOST"),
+#         "PORT": os.getenv("PGPORT"),
+#     }
+# }
