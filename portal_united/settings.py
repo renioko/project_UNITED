@@ -30,6 +30,9 @@ DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 # print("DEBUG =", DEBUG, type(DEBUG)) sanity check xD
 DB_LIVE = os.getenv("DB_LIVE", "False").lower() == "true"
 
+print("DEBUG =", DEBUG)
+print("DB_LIVE =", DB_LIVE)
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -212,6 +215,9 @@ else:
 
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'   
 
+if DB_LIVE:
+    assert EMAIL_HOST_USER, "EMAIL_HOST_USER is missing!"
+    assert EMAIL_HOST_PASSWORD, "EMAIL_HOST_PASSWORD is missing!"
 # ============================================================================
 # --DJANGO-ALLAUTH CONFIGURATION - NOWA SKŁADNIA (allauth 0.50+)--
 
