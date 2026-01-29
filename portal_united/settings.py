@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from decouple import config, Csv
+# from decouple import config, Csv
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,28 +21,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# ===========================================================================
+# 🚩 ENVIRONMENT FLAGS 
+# ===========================================================================
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+# print("DEBUG =", DEBUG, type(DEBUG)) sanity check xD
+DB_LIVE = os.getenv("DB_LIVE", "False").lower() == "true"
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.getenv("DEBUG") == "True"
-# DEBUG - ustaw na podstawie zmiennej środowiskowej
-DEBUG = config('DEBUG', default=False, cast=bool)
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # Security settings dla produkcji
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_BROWSER_XSS_FILTER = True  # deprecated
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-
-
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -56,7 +58,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
     # "https://*.railway.app",  
-    "https://projectunited-production.up.railway.app/", 
+    "https://projectunited-production.up.railway.app", 
 ]
 
 # Application definition
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Apps
     # 'communities',
+    'communities.apps.CommunitiesConfig', # - zamiast 'communities'
     'accounts',
     # Django-allauth wymaga 'sites' framework
     'django.contrib.sites',
@@ -77,7 +80,6 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',  # Opcjonalnie - dla Google/Facebook login w przyszłości
-    'communities.apps.CommunitiesConfig', # - zamiast 'communities'
 ]
 
 MIDDLEWARE = [
@@ -114,18 +116,15 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# ==========================================================================
+# DATABASE CONFIGURATION
+# ===========================================================================
 
-# ===================================
-# Database configuration
-# DATABASE_URL = config('DATABASE_URL', default=None)
-# if DATABASE_URL: # z💡 zmienic warunek na DB_LIVE
-
-DB_LIVE = config('DB_LIVE')
 if DB_LIVE:
     # Railway/Production - używa DATABASE_URL
     DATABASES = {
         "default": dj_database_url.parse(
-            os.environ["DATABASE_URL"],
+            os.environ["DATABASE_URL"], # fail fast 💥 environ wywali KeyError (getenv zwraca None)
             conn_max_age=600,
             ssl_require=True,
         )
@@ -142,21 +141,35 @@ else:
         'PORT': '5432',
         }
     }
-
-
-# Static files (CSS, JavaScript, Images)
+# ===========================================================================
+# STATIC FILES (CSS, JavaScript, Images)
+# ===========================================================================
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
+
 # Debug = True - jesli lokalnie ❗💡
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-if DEBUG:
+if not DB_LIVE:  
     STATICFILES_DIRS = [BASE_DIR / "static"]
 else:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# ============================================================================
+# AUTHENTICATION / ALLAUTH / EMAIL
+# ===========================================================================
+AUTH_USER_MODEL = "accounts.CustomUser"
 
-# Password validation
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend", # Standardowy backend Django (username/password)
+    "allauth.account.auth_backends.AuthenticationBackend", # Backend allauth - pozwala na logowanie emailem
+]
+
+SITE_ID = 1 # SITES FRAMEWORK
+# Django-allauth wymaga tego - każda instalacja Django może obsługiwać
+# wiele stron (sites). My mamy jedną.
+
+# PASSWORD VALIDATION
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -174,52 +187,34 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# EMAIL CONFIGURATION - Wysyłanie emaili weryfikacyjnych
+# --- Rozwój (development) - Console Backend ---
+# Email będzie "wysyłany" do konsoli/terminala (dla testów lokalnych)
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
-
-# MEDIA FILES (jeśli będziesz uploadować pliki)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-AUTH_USER_MODEL = 'accounts.CustomUser'
-
-# AUTHENTICATION BACKENDS
-# Django-allauth potrzebuje własnego backendu obok standardowego
-AUTHENTICATION_BACKENDS = [
-    # Standardowy backend Django (username/password)
-    'django.contrib.auth.backends.ModelBackend',
-    
-    # Backend allauth - pozwala na logowanie emailem
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
-
-# Email verification - Railway
-if not DEBUG:
-    # Produkcja - Railway
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
-    DEFAULT_FROM_EMAIL = 'noreply@projectunited-production.up.railway.app/'  # Zmień później
-    
-    # Ustaw prawidłową domenę dla linków weryfikacyjnych
-    SITE_ID = 1
-else:
-    # Lokalnie
+if not DB_LIVE:
+    # Lokalnie - wyświetlaj w konsoli
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+else:
+    # Produkcja - Gmail SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')  # Twój Gmail
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # App password
+    DEFAULT_FROM_EMAIL = f'Portal UNITED <{os.getenv("EMAIL_HOST_USER")}>'
 
-# SITES FRAMEWORK
-# Django-allauth wymaga tego - każda instalacja Django może obsługiwać
-# wiele stron (sites). My mamy jedną.
-SITE_ID = 1
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'   
 
 # ============================================================================
 # --DJANGO-ALLAUTH CONFIGURATION - NOWA SKŁADNIA (allauth 0.50+)--
+
 # --- Metody logowania ---
 # Użytkownik może logować się username LUB emailem
 ACCOUNT_LOGIN_METHODS = ['email', 'username']
@@ -277,32 +272,23 @@ LOGIN_URL = '/accounts/login/'
 # Custom formularz rejestracji z wyborem typu użytkownika
 ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
 
+# ===========================================================================
 
-# ============================================================================
-# EMAIL CONFIGURATION - Wysyłanie emaili weryfikacyjnych
+# Internationalization
+# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-# --- Rozwój (development) - Console Backend ---
-# Email będzie "wysyłany" do konsoli/terminala (dla testów lokalnych)
-ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
-ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+LANGUAGE_CODE = 'en-us'
 
-# Email Configuration
+TIME_ZONE = 'UTC'
 
-if DB_LIVE:
-    # Lokalnie - wyświetlaj w konsoli
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    # Produkcja - Gmail SMTP
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = config('EMAIL_HOST_USER')  # Twój Gmail
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')  # App password
-    DEFAULT_FROM_EMAIL = 'Portal UNITED <noreply@portalunited.com>'
+USE_I18N = True
 
+USE_TZ = True
+# ===========================================================================
 
+# MEDIA FILES (jeśli będziesz uploadować pliki)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
+# ===========================================================================
+# DEFAULT AUTO FIELD
