@@ -30,10 +30,6 @@ DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 # print("DEBUG =", DEBUG, type(DEBUG)) sanity check xD
 DB_LIVE = os.getenv("DB_LIVE", "False").lower() == "true"
 
-print("DEBUG =", DEBUG)
-print("DB_LIVE =", DB_LIVE)
-
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 
