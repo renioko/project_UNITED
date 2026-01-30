@@ -15,6 +15,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 # from decouple import config, Csv
 import dj_database_url
+import ssl
+import certifi
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -202,12 +204,14 @@ if not DB_LIVE:
 else:
     # Produkcja - Gmail SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'in-v3.mailjet.com'
+    EMAIL_HOST = "in-v3.mailjet.com"
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = os.getenv('MAILJET_API_KEY')  
     EMAIL_HOST_PASSWORD = os.getenv('MAILJET_SECRET_KEY')  
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+    EMAIL_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
     # Allauth
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'   
 
