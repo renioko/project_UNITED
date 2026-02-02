@@ -211,7 +211,7 @@ else:
     EMAIL_HOST_PASSWORD = os.getenv('MAILJET_SECRET_KEY')  
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
-    EMAIL_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+    # EMAIL_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
     # Allauth
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'   
 
