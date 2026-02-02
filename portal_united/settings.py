@@ -205,19 +205,15 @@ else:
     # Produkcja - Gmail SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = "in-v3.mailjet.com"
-    EMAIL_PORT = 587
+    EMAIL_PORT = os.getenv('EMAIL_PORT')
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = os.getenv('MAILJET_API_KEY')  
     EMAIL_HOST_PASSWORD = os.getenv('MAILJET_SECRET_KEY')  
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
-
     # EMAIL_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
     # Allauth
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'   
 
-if DB_LIVE:
-    assert EMAIL_HOST_USER, "EMAIL_HOST_USER is missing!"
-    assert EMAIL_HOST_PASSWORD, "EMAIL_HOST_PASSWORD is missing!"
 # ============================================================================
 # --DJANGO-ALLAUTH CONFIGURATION - NOWA SKŁADNIA (allauth 0.50+)--
 
@@ -298,3 +294,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # ===========================================================================
 # DEFAULT AUTO FIELD
+
+if __name__ == '__main__':
+    print(os.environ["DB_PASSWORD"])
