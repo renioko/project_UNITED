@@ -15,8 +15,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 # from decouple import config, Csv
 import dj_database_url
-import ssl
-import certifi
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -199,17 +199,52 @@ ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 
 if not DB_LIVE:
     # Lokalnie - wyświetlaj w konsoli
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    # ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+
+    # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    # EMAIL_BACKEND = 'portal_united.mailjet_backend.MailjetBackend'
+    # EMAIL_HOST = 'in-v3.mailjet.com'
+    # EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587)) # ← SSL port - 465
+    # EMAIL_USE_SSL = True  # ← SSL zamiast TLS
+    # EMAIL_USE_TLS = False
+    # EMAIL_HOST_USER = os.getenv('MAILJET_API_KEY')
+    # EMAIL_HOST_PASSWORD = os.getenv('MAILJET_SECRET_KEY')
+    # DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'renatta.gasior@gmail.com')
+    
+    # Lokalnie - Mailjet REST API (omija problem SSL)
+    EMAIL_BACKEND = 'portal_united.mailjet_backend.MailjetBackend'
+    MAILJET_API_KEY = os.getenv('MAILJET_API_KEY')
+    MAILJET_SECRET_KEY = os.getenv('MAILJET_SECRET_KEY')
+    DEFAULT_FROM_EMAIL = 'renatta.gasior@gmail.com'
+    DEFAULT_FROM_EMAIL = 'renatta.gasior@gmail.com'
+
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+
+    # FIX dla Windows - SSL context z certifi
+    # EMAIL_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+    # EMAIL_SSL_CONTEXT = ssl._create_unverified_context()
+# Włącz szczegółowe logi emaili
+    # logging.basicConfig(level=logging.DEBUG)
+    # logger = logging.getLogger('django.core.mail')
+    # logger.setLevel(logging.DEBUG)
+
 else:
-    # Produkcja - Gmail SMTP
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = "in-v3.mailjet.com"
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT')) 
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = os.getenv('MAILJET_API_KEY')  
-    EMAIL_HOST_PASSWORD = os.getenv('MAILJET_SECRET_KEY')  
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+    # Produkcja 
+    # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    # EMAIL_HOST = "in-v3.mailjet.com"
+    # EMAIL_PORT = int(os.getenv('EMAIL_PORT')) 
+    # EMAIL_USE_TLS = True
+    # EMAIL_HOST_USER = os.getenv('MAILJET_API_KEY')  
+    # EMAIL_HOST_PASSWORD = os.getenv('MAILJET_SECRET_KEY')  
+    # DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+    
+    # Produkcja - też REST API (działa lepiej niż SMTP na Railway)
+    EMAIL_BACKEND = 'portal_united.mailjet_backend.MailjetBackend'
+    MAILJET_API_KEY = os.getenv('MAILJET_API_KEY')
+    MAILJET_SECRET_KEY = os.getenv('MAILJET_SECRET_KEY')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'renatta.gasior@gmail.com')
+        
     # EMAIL_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
     # Allauth
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'   
