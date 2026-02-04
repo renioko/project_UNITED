@@ -8,15 +8,29 @@ logger = logging.getLogger(__name__)
 class MailjetBackend(BaseEmailBackend):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.client = Client(
-            auth=(settings.MAILJET_API_KEY, settings.MAILJET_SECRET_KEY),
-            version='v3.1'
-        )
-    
+
+        # W testach nie inicjalizuj Mailjet klienta
+        if not getattr(settings, 'TESTING', False):
+
+            self.client = Client(
+                auth=(settings.MAILJET_API_KEY, settings.MAILJET_SECRET_KEY),
+                version='v3.1'
+            )
+        else:
+            self.client = None
+
+
     def send_messages(self, email_messages):
         if not email_messages:
             return 0
         
+        # W testach użyj standardowego backendu
+        if getattr(settings, 'TESTING', False):
+            from django.core.mail.backends.locmem import EmailBackend
+            backend = EmailBackend()
+            return backend.send_messages(email_messages)
+        
+        # Produkcja - użyj Mailjet API
         num_sent = 0
         for message in email_messages:
             try:

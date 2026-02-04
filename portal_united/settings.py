@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+import sys
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -292,5 +292,35 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # ===========================================================================
 # DEFAULT AUTO FIELD
 
+# Test settings
+if 'test' in sys.argv:
+
+    # Flaga dla mailjet_backend.py
+    TESTING = True
+    # Email backend dla testów - zapisuje w pamięci zamiast wysyłać
+
+    EMAIL_BACKEND = 'portal_united.mailjet_backend.MailjetBackend'
+    
+    # Wyłączam weryfikację emaila w testach (ułatwia testowanie logowania)
+    ACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+    # Używaj szybszej bazy danych dla testów
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+    # Wyłączam WhiteNoise dla testów (przyspiesza)
+    # STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+    # Dummy klucze Mailjet
+    MAILJET_API_KEY = 'test-key'
+    MAILJET_SECRET_KEY = 'test-secret'
+    DEFAULT_FROM_EMAIL = 'test@example.com'
+else:
+    TESTING = False
+
+    
 if __name__ == '__main__':
-    print(os.environ["DB_PASSWORD"])
+    print('Jesus is my Lord')
