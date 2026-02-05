@@ -8,10 +8,12 @@ Używamy ich do automatycznego tworzenia członkostwa (Membership)
 gdy ktoś zakłada nową wspólnotę.
 """
 
+import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import CommunityProfile, Membership
 
+logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=CommunityProfile)
 def create_owner_membership(sender, instance, created, **kwargs):
@@ -58,4 +60,10 @@ def create_owner_membership(sender, instance, created, **kwargs):
         # invited_by można zostawić puste (sam się dodał jako założyciel)
     )
     
-    print(f"✅ Automatycznie dodano {instance.created_by.username} jako owner wspólnoty '{instance.name}'")
+    # print(f"✅ Automatycznie dodano {instance.created_by.username} jako owner wspólnoty '{instance.name}'")
+
+    logger.debug(
+        "Automatycznie dodano %s jako owner wspólnoty '%s'",
+        instance.created_by.username,
+        instance.name
+    )

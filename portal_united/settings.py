@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
+import logging
 import sys
 import os
 from pathlib import Path
@@ -142,6 +143,24 @@ else:
         'PORT': '5432',
         }
     }
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO", # albo "DEBUG"
+    },
+}
+
 # ===========================================================================
 # STATIC FILES (CSS, JavaScript, Images)
 # ===========================================================================

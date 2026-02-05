@@ -126,7 +126,7 @@ class CommunityProfile(models.Model):
         """
         if not self.slug:
             from django.utils.text import slugify
-            base_slug = slugify(self.name, allow_unicode=True)
+            base_slug = slugify(self.name) # było allow_unicode=True - ale to zachowuje pl znaki w slug
             slug = base_slug
             counter = 1
             

@@ -80,6 +80,7 @@ class PersonProfileModelTest(TestCase):
         
         self.assertEqual(str(profile), 'Jan')
     
+    # chce dac mozliwosc bez imion? hmm
     def test_person_profile_str_without_names(self):
         """Test __str__ gdy brak imienia i nazwiska"""
         profile = PersonProfile.objects.create(
@@ -294,14 +295,20 @@ class MembershipModelTest(TestCase):
     
     def test_is_owner_method(self):
         """Test metody is_owner()"""
+        # Utwórz nowych użytkowników dla tego testu (żeby nie było konfliktu)
+        owner = User.objects.create_user(username='test_owner', email='test_owner@ex.com', password='Pass123!')
+        member = User.objects.create_user(username='test_member', email='test_member@ex.com', password='Pass123!')
+        PersonProfile.objects.create(user=owner, first_name='Owner')
+        PersonProfile.objects.create(user=member, first_name='Member')
+
         owner_membership = Membership.objects.create(
-            person=self.owner,
+            person=owner,
             community=self.community,
             role='owner'
         )
         
         member_membership = Membership.objects.create(
-            person=self.member,
+            person=member,
             community=self.community,
             role='member'
         )
@@ -311,27 +318,29 @@ class MembershipModelTest(TestCase):
     
     def test_is_admin_or_owner_method(self):
         """Test metody is_admin_or_owner()"""
-        admin = User.objects.create_user(
-            username='admin',
-            email='admin@example.com',
-            password='Pass123!'
-        )
-        PersonProfile.objects.create(user=admin, first_name='Admin')
+        # Utwórz nowych użytkowników dla tego testu
+        test_owner = User.objects.create_user(username='test_owner2', email='test_owner2@ex.com', password='Pass123!')
+        test_admin = User.objects.create_user(username='test_admin', email='test_admin@ex.com', password='Pass123!')
+        test_member = User.objects.create_user(username='test_member2', email='test_member2@ex.com', password='Pass123!')
+        
+        PersonProfile.objects.create(user=test_owner, first_name='Owner')
+        PersonProfile.objects.create(user=test_admin, first_name='Admin')
+        PersonProfile.objects.create(user=test_member, first_name='Member')
         
         owner_membership = Membership.objects.create(
-            person=self.owner,
+            person=test_owner,
             community=self.community,
             role='owner'
         )
         
         admin_membership = Membership.objects.create(
-            person=admin,
+            person=test_admin,
             community=self.community,
             role='admin'
         )
         
         member_membership = Membership.objects.create(
-            person=self.member,
+            person=test_member,
             community=self.community,
             role='member'
         )
@@ -342,27 +351,29 @@ class MembershipModelTest(TestCase):
     
     def test_can_manage_members_method(self):
         """Test metody can_manage_members()"""
-        leader = User.objects.create_user(
-            username='leader',
-            email='leader@example.com',
-            password='Pass123!'
-        )
-        PersonProfile.objects.create(user=leader, first_name='Leader')
+                # Utwórz nowych użytkowników dla tego testu
+        test_owner = User.objects.create_user(username='test_owner3', email='test_owner3@ex.com', password='Pass123!')
+        test_leader = User.objects.create_user(username='test_leader', email='test_leader@ex.com', password='Pass123!')
+        test_member = User.objects.create_user(username='test_member3', email='test_member3@ex.com', password='Pass123!')
+        
+        PersonProfile.objects.create(user=test_owner, first_name='Owner')
+        PersonProfile.objects.create(user=test_leader, first_name='Leader')
+        PersonProfile.objects.create(user=test_member, first_name='Member')
         
         owner_membership = Membership.objects.create(
-            person=self.owner,
+            person=test_owner,
             community=self.community,
             role='owner'
         )
         
         leader_membership = Membership.objects.create(
-            person=leader,
+            person=test_leader,
             community=self.community,
             role='leader'
         )
         
         member_membership = Membership.objects.create(
-            person=self.member,
+            person=test_member,
             community=self.community,
             role='member'
         )
@@ -389,37 +400,40 @@ class CommunityPermissionsTest(TestCase):
     """Testy uprawnień do edycji wspólnoty"""
     
     def setUp(self):
-        # Utwórz użytkowników z różnymi rolami
+
         self.owner = User.objects.create_user(
-            username='owner', email='owner@example.com', password='Pass123!'
-        )
-        self.admin = User.objects.create_user(
-            username='admin', email='admin@example.com', password='Pass123!'
-        )
-        self.leader = User.objects.create_user(
-            username='leader', email='leader@example.com', password='Pass123!'
-        )
-        self.member = User.objects.create_user(
-            username='member', email='member@example.com', password='Pass123!'
-        )
-        self.outsider = User.objects.create_user(
-            username='outsider', email='outsider@example.com', password='Pass123!'
+            username='permissions_test_owner', 
+            email='permissions_owner@example.com', 
+            password='Pass123!'
         )
         
+        # Utwórz wspólnotę - signal automatycznie doda self.owner jako owner!
+        self.community = CommunityProfile.objects.create(
+            name='Permissions Test Community',
+            description='Test',
+            city='Kraków',
+            created_by=self.owner  # Signal utworzy Membership(owner)
+        )
+
+        # Utwórz innych członków
+        self.admin = User.objects.create_user(
+            username='permissions_test_admin', email='permissions_test_admin@example.com', password='Pass123!'
+        )
+        self.leader = User.objects.create_user(
+            username='permissions_test_leader', email='permissions_test_leader@example.com', password='Pass123!'
+        )
+        self.member = User.objects.create_user(
+            username='permissions_test_member', email='permissions_test_member@example.com', password='Pass123!'
+        )
+        self.outsider = User.objects.create_user(
+            username='ppermissions_test_outsider', email='permissions_test_outsider@example.com', password='Pass123!'
+        )
         # Utwórz profile
         for user in [self.owner, self.admin, self.leader, self.member, self.outsider]:
             PersonProfile.objects.create(user=user, first_name=user.username)
         
-        # Utwórz wspólnotę
-        self.community = CommunityProfile.objects.create(
-            name='Test Community',
-            description='Test',
-            city='Kraków',
-            created_by=self.owner
-        )
-        
-        # Dodaj członków z różnymi rolami
-        Membership.objects.create(person=self.owner, community=self.community, role='owner')
+        # Dodaj pozostałych członków z róznymi rolami 
+        # (self.owner już został dodany przez signal!)
         Membership.objects.create(person=self.admin, community=self.community, role='admin')
         Membership.objects.create(person=self.leader, community=self.community, role='leader')
         Membership.objects.create(person=self.member, community=self.community, role='member')
