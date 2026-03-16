@@ -62,8 +62,13 @@ def create_owner_membership(sender, instance, created, **kwargs):
     
     # print(f"✅ Automatycznie dodano {instance.created_by.username} jako owner wspólnoty '{instance.name}'")
 
-    logger.debug(
+    if created:
+        logger.debug(
         "Automatycznie dodano %s jako owner wspólnoty '%s'",
         instance.created_by.username,
         instance.name
-    )
+        )
+        logger.info(
+            "Membership %s został utworzony",
+            instance.id
+        )
