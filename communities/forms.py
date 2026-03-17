@@ -9,7 +9,8 @@ Zawiera formularze do:
 
 from django import forms
 from .models import CommunityProfile, Tag
-
+from .validators import validate_image_file
+from cloudinary.models import CloudinaryResource
 
 class CommunityCreateForm(forms.ModelForm):
     """
@@ -35,8 +36,8 @@ class CommunityCreateForm(forms.ModelForm):
             'contact_email',
             'contact_phone',
             'website',
-            'photo_url',
-            'logo_url',
+            'photo',
+            'logo',
         ]
         
         # Customizacja widgetów (HTML inputs)
@@ -78,13 +79,14 @@ class CommunityCreateForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'https://nasza-wspolnota.pl'
             }),
-            'photo_url': forms.URLInput(attrs={
+            # Upload zdjęć - FileInput zamiast URLInput
+            'photo': forms.FileInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'https://example.com/zdjecie.jpg'
+                'accept': 'image/*'
             }),
-            'logo_url': forms.URLInput(attrs={
+            'logo': forms.FileInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'https://example.com/logo.png'
+                'accept': 'image/*'
             }),
         }
         
@@ -100,16 +102,16 @@ class CommunityCreateForm(forms.ModelForm):
             'contact_email': 'Email kontaktowy',
             'contact_phone': 'Telefon kontaktowy',
             'website': 'Strona WWW',
-            'photo_url': 'URL zdjęcia głównego',
-            'logo_url': 'URL logo',
+            'photo': 'Zdjęcie',
+            'logo': 'Logo',
         }
         
         # Teksty pomocnicze
         help_texts = {
             'description': 'Krótki opis który pojawi się na liście wspólnot (max 500 znaków)',
             'tags': 'Zaznacz wszystkie pasujące tagi - pomaga innym znaleźć Waszą wspólnotę',
-            'photo_url': 'Link do zdjęcia głównego wspólnoty (później dodamy upload)',
-            'logo_url': 'Link do logo wspólnoty (opcjonalne)',
+            'photo': 'Link do zdjęcia głównego wspólnoty (później dodamy upload)',
+            'logo': 'Link do logo wspólnoty (opcjonalne)',
         }
     
     def __init__(self, *args, **kwargs):
@@ -131,8 +133,24 @@ class CommunityCreateForm(forms.ModelForm):
         self.fields['contact_email'].required = False
         self.fields['contact_phone'].required = False
         self.fields['website'].required = False
-        self.fields['photo_url'].required = False
-        self.fields['logo_url'].required = False
+        self.fields['photo'].required = False
+        self.fields['logo'].required = False
+    
+    def _validate_image_field(self, field_name):
+        """
+        Helper - waliduje pole obrazka tylko jeśli to świeży upload.
+        CloudinaryResource = już na serwerze, pomijamy.
+        """
+        image = self.cleaned_data.get(field_name)
+        if image and not isinstance(image, CloudinaryResource):
+            validate_image_file(image)
+        return image
+    
+    def clean_photo(self):
+        return self._validate_image_field('photo')
+
+    def clean_logo(self):
+        return self._validate_image_field('logo')
     
     def clean(self):
         """
@@ -149,7 +167,6 @@ class CommunityCreateForm(forms.ModelForm):
                 'denomination_other',
                 'Proszę podać nazwę denominacji jeśli wybrano "Inna".'
             )
-        
         return cleaned_data
 
 
@@ -175,8 +192,8 @@ class CommunityEditForm(forms.ModelForm):
             'contact_email',
             'contact_phone',
             'website',
-            'photo_url',
-            'logo_url',
+            'photo',
+            'logo',
         ]
         
         widgets = {
@@ -192,11 +209,46 @@ class CommunityEditForm(forms.ModelForm):
             'contact_email': forms.EmailInput(attrs={'class': 'form-control'}),
             'contact_phone': forms.TextInput(attrs={'class': 'form-control'}),
             'website': forms.URLInput(attrs={'class': 'form-control'}),
-            'photo_url': forms.URLInput(attrs={'class': 'form-control'}),
-            'logo_url': forms.URLInput(attrs={'class': 'form-control'}),
+            'photo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+            'logo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
         }
         
         labels = {
             'full_description': 'Pełny opis działalności',
             'address': 'Adres (ulica, nr budynku)',
+            'photo': 'Zdjęcie główne wspólnoty',  
+            'logo': 'Logo wspólnoty',
         }
+
+    def _validate_image_field(self, field_name):
+        """
+        Helper - waliduje pole obrazka tylko jeśli to świeży upload.
+        CloudinaryResource = już na serwerze, pomijamy.
+        """
+        image = self.cleaned_data.get(field_name)
+        if image and not isinstance(image, CloudinaryResource):
+            validate_image_file(image)
+        return image
+
+    def clean_photo(self):
+        return self._validate_image_field('photo')
+
+    def clean_logo(self):
+        return self._validate_image_field('logo')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        denomination = cleaned_data.get('denomination')
+        denomination_other = cleaned_data.get('denomination_other')
+        if denomination == 'other' and not denomination_other:
+            self.add_error(
+                'denomination_other',
+                'Proszę podać nazwę denominacji jeśli wybrano "Inna".'
+            )
+        return cleaned_data

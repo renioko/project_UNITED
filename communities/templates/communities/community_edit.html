@@ -35,7 +35,7 @@
             </div>
             <div class="card-body">
                 
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <!-- Podstawowe informacje -->
@@ -180,25 +180,92 @@
                     </div>
                     
                     <hr class="my-4">
-                    
                     <!-- Zdjęcia -->
                     <h5 class="mb-3">📷 Zdjęcia</h5>
-                    
+
                     <div class="row">
+                        <!-- Logo wspólnoty -->
                         <div class="col-md-6 mb-3">
-                            <label for="{{ form.photo_url.id_for_label }}" class="form-label">
-                                {{ form.photo_url.label }}
+                            <label for="{{ form.logo.id_for_label }}" class="form-label">
+                                Logo wspólnoty
                             </label>
-                            {{ form.photo_url }}
-                            <small class="form-text text-muted">URL zdjęcia głównego</small>
+                            
+                            <!-- Podgląd obecnego logo -->
+                            {% if form.instance.logo %}
+                            <div class="mb-2">
+                                <img src="{{ form.instance.logo.url }}" 
+                                    alt="Obecne logo" 
+                                    class="img-thumbnail"
+                                    style="max-width: 200px; max-height: 200px; object-fit: contain;">
+                                <p class="small text-muted mt-1">Obecne logo</p>
+                                
+                                <!-- Checkbox do usunięcia -->
+                                <div class="form-check">
+                                    <input type="checkbox" 
+                                        name="logo-clear" 
+                                        id="logo-clear"
+                                        class="form-check-input">
+                                    <label class="form-check-label" for="logo-clear">
+                                        Usuń obecne logo
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Upload nowego logo -->
+                            {{ form.logo }}
+                            
+                            {% if form.logo.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.logo.errors }}
+                            </div>
+                            {% endif %}
+                            
+                            <small class="form-text text-muted">
+                                Format: JPG, PNG, GIF, WEBP. Max 5MB.
+                            </small>
                         </div>
                         
+                        <!-- Zdjęcie główne -->
                         <div class="col-md-6 mb-3">
-                            <label for="{{ form.logo_url.id_for_label }}" class="form-label">
-                                {{ form.logo_url.label }}
+                            <label for="{{ form.photo.id_for_label }}" class="form-label">
+                                Zdjęcie główne wspólnoty
                             </label>
-                            {{ form.logo_url }}
-                            <small class="form-text text-muted">URL logo wspólnoty</small>
+                            
+                            <!-- Podgląd obecnego zdjęcia -->
+                            {% if form.instance.photo %}
+                            <div class="mb-2">
+                                <img src="{{ form.instance.photo.url }}" 
+                                    alt="Obecne zdjęcie" 
+                                    class="img-thumbnail"
+                                    style="max-width: 200px; max-height: 200px; object-fit: cover;">
+                                <p class="small text-muted mt-1">Obecne zdjęcie</p>
+                                
+                                <!-- Checkbox do usunięcia -->
+                                <div class="form-check">
+                                    <input type="checkbox" 
+                                        name="photo-clear" 
+                                        id="photo-clear"
+                                        class="form-check-input">
+                                    <label class="form-check-label" for="photo-clear">
+                                        Usuń obecne zdjęcie
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Upload nowego zdjęcia -->
+                            {{ form.photo }}
+                            
+                            {% if form.photo.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.photo.errors }}
+                            </div>
+                            {% endif %}
+                            
+                            <small class="form-text text-muted">
+                                Format: JPG, PNG, GIF, WEBP. Max 5MB.
+                            </small>
                         </div>
                     </div>
                     

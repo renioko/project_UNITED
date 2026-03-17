@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import URLValidator
+from .validators import validate_image_file
+from cloudinary.models import CloudinaryField
 
 class Tag(models.Model):
     """
@@ -49,6 +51,7 @@ class CommunityProfile(models.Model):
     
     # Podstawowe informacje (strona główna)
     name = models.CharField(max_length=200, verbose_name='Nazwa wspólnoty')
+    
     # dodane slug
     slug = models.SlugField(max_length=200, unique=True, blank=True, verbose_name='Slug (URL)')
     description = models.TextField(verbose_name='Krótki opis', max_length=500)
@@ -62,25 +65,34 @@ class CommunityProfile(models.Model):
         blank=True,
         verbose_name='Denominacja'
     )
+
     denomination_other = models.CharField(
         max_length=100,
         blank=True,
         verbose_name='Inna denominacja (jeśli wybrano "Inna")',
         help_text='Wypełnij tylko jeśli wybrałeś "Inna"'
     )
-    
-    # Zdjęcia (na razie URL, później upload)
-    photo_url = models.URLField(
+
+    # Logo
+    logo = CloudinaryField('image',
+        # upload_to='community_logos/',
+        folder='community_logos/',
         blank=True,
-        validators=[URLValidator()],
-        verbose_name='URL zdjęcia głównego'
+        null=True,
+        # verbose_name='Logo',
+        validators=[validate_image_file],
     )
-    logo_url = models.URLField(
+
+    # Zdjecie
+    photo = CloudinaryField('image',
+        folder='comminity_photos/',
+        # upload_to='community_photos/',
         blank=True,
-        validators=[URLValidator()],
-        verbose_name='URL logo'
+        null=True,
+        # verbose_name='Zdjęcie główne',
+        validators=[validate_image_file],
     )
-    
+
     # Tagi
     tags = models.ManyToManyField(Tag, blank=True, related_name='communities', verbose_name='Tagi')
     
@@ -192,8 +204,9 @@ class CommunityProfile(models.Model):
 
 class PersonProfile(models.Model):
     """
-    Profil osoby indywidualnej - BEZ ZMIAN.
-    
+    Profil osoby indywidualnej.
+
+    Update:
     Każdy użytkownik to osoba (user_type='person').
     Wspólnoty nie są już użytkownikami!
     """
@@ -202,16 +215,22 @@ class PersonProfile(models.Model):
         on_delete=models.CASCADE,
         limit_choices_to={'user_type': 'person'},
         related_name='person_profile',
-        verbose_name='Użytkownik'
+        verbose_name='Użytkownik',
     )
+
+    avatar = CloudinaryField('image',
+        folder='avatars/',
+        # upload_to-'avatars/',
+        blank=True,
+        null=True,
+        # verbose_name='Avatar',
+        validators=[validate_image_file]
+        )
     
     first_name = models.CharField(max_length=100, verbose_name='Imię')
     last_name = models.CharField(max_length=100, blank=True, verbose_name='Nazwisko')
     city = models.CharField(max_length=100, blank=True, verbose_name='Miasto')
     bio = models.TextField(max_length=500, blank=True, verbose_name='O mnie')
-    
-    # Zdjęcie profilowe (URL)
-    photo_url = models.URLField(blank=True, verbose_name='URL zdjęcia')
     
     # Daty
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Data utworzenia')

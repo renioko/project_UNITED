@@ -318,7 +318,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     
     model = PersonProfile
     template_name = 'communities/profile_edit.html'
-    fields = ['first_name', 'last_name', 'city', 'bio', 'photo_url']
+    fields = ['first_name', 'last_name', 'city', 'bio', 'avatar']
     success_url = reverse_lazy('communities:profile')
     
     def get_object(self, queryset=None):
@@ -421,6 +421,22 @@ class CommunityEditView(CommunityLeaderRequiredMixin, UpdateView):
         """Przekieruj do profilu wspólnoty po sukcesie"""
         return reverse_lazy('communities:community_detail', kwargs={'pk': self.community.pk})
     
+    # NIE WIEM CZY TO KONIECZNE?? ❓❓
+    #  UWAGA: Django automatycznie obsługuje request.FILES w UpdateView, więc teoretycznie post() nie jest konieczne, ALE dodaję go dla pewności i czytelności.
+    # def post(self, request, *args, **kwargs):
+    #         """
+    #         Obsługa POST z plikami.
+            
+    #         WAŻNE: request.FILES jest potrzebne do uploadu obrazków!
+    #         """
+    #         self.object = self.get_object()
+    #         form = self.get_form()
+            
+    #         if form.is_valid():
+    #             return self.form_valid(form)
+    #         else:
+    #             return self.form_invalid(form)
+
     def form_valid(self, form):
         """Komunikat sukcesu"""
         messages.success(self.request, f'✅ Profil wspólnoty "{self.community.name}" został zaktualizowany.')

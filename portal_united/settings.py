@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
+import cloudinary
 import logging
 import sys
 import os
@@ -17,24 +18,54 @@ from dotenv import load_dotenv
 # from decouple import config, Csv
 import dj_database_url
 
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
+
+
+def get_env(key: str, default=None, required=False):
+    """
+    Ta funcja to helper, ktory ma rzucic własnym wyjątkiem.
+    Dzięki temu nie musze polegać na zewnętrznej bibliotece python-decouple
+    ani nie ryzykuje cichego błedu (None) przy uzyciu os.getenv.
+    Użycie:
+    # Wymagane - crashuje od razu z czytelnym błędem
+SECRET_KEY = get_env("SECRET_KEY", required=True)
+CLOUDINARY_CLOUD_NAME = get_env("CLOUDINARY_CLOUD_NAME", required=True)
+
+# Opcjonalne - ma sensowny default
+DEBUG = get_env("DEBUG", default="False").lower() == "true"
+```
+
+## Efekt gdy brakuje zmiennej
+```
+ValueError: ❌ Brakuje zmiennej środowiskowej: CLOUDINARY_CLOUD_NAME
+   Sprawdź plik .env lub zmienne środowiskowe serwera.
+    """
+    value = os.getenv(key, default)
+    if required and value is None:
+        raise ValueError(
+            f"❌ Brakuje zmiennej środowiskowej: {key}\n"
+            f"   Sprawdź plik .env lub zmienne środowiskowe serwera."
+        )
+    return value
+
 
 # ===========================================================================
 # 🚩 ENVIRONMENT FLAGS 
 # ===========================================================================
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+# DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+DEBUG = get_env("DEBUG", default=False).lower() == "true"
 # print("DEBUG =", DEBUG, type(DEBUG)) sanity check xD
-DB_LIVE = os.getenv("DB_LIVE", "False").lower() == "true"
+# DB_LIVE = os.getenv("DB_LIVE", "False").lower() == "true"
+DB_LIVE = get_env("DB_LIVE", default=False). lower() == "true"
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+# SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = get_env("SECRET_KEY")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -71,6 +102,10 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    # cloudinary
+    'cloudinary_storage',
+    'cloudinary',
+    # staticfiles
     'django.contrib.staticfiles',
     # Apps
     # 'communities',
@@ -318,6 +353,29 @@ USE_TZ = True
 # MEDIA FILES (jeśli będziesz uploadować pliki)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# ============================================
+# CLOUDINARY - Image Storage
+# ============================================
+
+# Cloudinary config
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': get_env('CLOUDINARY_CLOUD_NAME', required=True),
+    'API_KEY': get_env('CLOUDINARY_API_KEY', required=True),
+    'API_SECRET': get_env('CLOUDINARY_API_SECRET', required=True),
+}
+# cloudinary.config(
+#     cloud_name=get_env('CLOUDINARY_CLOUD_NAME', required=True),
+#     api_key=get_env('CLOUDINARY_API_KEY', required=True),
+#     api_secret=get_env('CLOUDINARY_API_SECRET', required=True),
+#     secure=True
+# )
+
+# Media files storage
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Image validation
+MAX_IMAGE_SIZE = 5 * 1054 * 1054  # 5MB
 
 # ===========================================================================
 # DEFAULT AUTO FIELD

@@ -8,8 +8,8 @@
         <div class="col-md-8">
 
             <!-- Zdjęcie główne -->
-            {% if community.photo_url %}
-            <img src="{{ community.photo_url }}" class="img-fluid rounded mb-4" alt="{{ community.name }}">
+            {% if community.photo %}
+            <img src="{{ community.photo.url }}" class="img-fluid rounded mb-4" alt="{{ community.name }}">
             {% endif %}
 
             <!-- Nazwa i opis -->
@@ -72,9 +72,9 @@
         <div class="col-md-4">
 
             <!-- Logo -->
-            {% if community.logo_url %}
+            {% if community.logo %}
             <div class="text-center mb-4">
-                <img src="{{ community.logo_url }}" 
+                <img src="{{ community.logo.url }}" 
                     alt="Logo {{ community.name }}"
                     class="img-fluid"
                     style="max-height: 150px;">

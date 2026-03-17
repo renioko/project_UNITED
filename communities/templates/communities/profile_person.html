@@ -9,8 +9,8 @@
         <div class="card mb-4">
             <div class="card-body text-center">
                 <!-- Zdjęcie profilowe -->
-                {% if profile.photo_url %}
-                <img src="{{ profile.photo_url }}" 
+                {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" 
                     alt="{{ profile.first_name }}" 
                     class="rounded-circle mb-3"
                     style="width: 150px; height: 150px; object-fit: cover;">

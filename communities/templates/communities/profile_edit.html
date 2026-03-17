@@ -18,8 +18,8 @@
                 </div>
                 {% endfor %}
                 {% endif %}
-                
-                <form method="post">
+
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <!-- Imię -->
@@ -74,18 +74,44 @@
                         </small>
                     </div>
                     
-                    <!-- URL zdjęcia -->
+                    <!-- Avatar - upload zdjęcia -->
                     <div class="mb-3">
-                        <label for="{{ form.photo_url.id_for_label }}" class="form-label">
-                            URL zdjęcia profilowego
+                        <label for="{{ form.avatar.id_for_label }}" class="form-label">
+                            Zdjęcie profilowe
                         </label>
-                        <input type="url" 
-                            name="photo_url" 
-                            value="{{ form.photo_url.value|default:'' }}"
-                            class="form-control"
-                            placeholder="https://example.com/moje-zdjecie.jpg">
+                        <!-- Podgląd obecnego avatara (jeśli istnieje) -->
+                        {% if form.instance.avatar %}
+                        <div class="mb-2">
+                            <img src="{{ form.instance.avatar.url }}" 
+                                alt="Obecny avatar" 
+                                class="img-thumbnail"
+                                style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                            
+                            <!-- Checkbox do usunięcia zdjęcia -->
+                            <div class="form-check mt-2">
+                                <input type="checkbox" 
+                                    name="avatar-clear" 
+                                    id="avatar-clear"
+                                    class="form-check-input">
+                                <label class="form-check-label" for="avatar-clear">
+                                    Usuń obecne zdjęcie
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <input type="file" 
+                            name="avatar" 
+                            accept="image/*"
+                            class="form-control {% if form.avatar.errors %}is-invalid{% endif %}"
+                            id="{{ form.avatar.id_for_label }}">
+                        
+                        {% if form.avatar.errors %}
+                        <div class="invalid-feedback">{{ form.avatar.errors }}</div>
+                        {% endif %}
+                        
                         <small class="form-text text-muted">
-                            Podaj link do zdjęcia (później dodamy upload plików)
+                            Dozwolone formaty: JPG, PNG, GIF, WEBP. Maksymalny rozmiar: 5MB.
                         </small>
                     </div>
                     
