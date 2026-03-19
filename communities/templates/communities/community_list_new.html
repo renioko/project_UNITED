@@ -69,11 +69,11 @@
                         <div class="col-md-3 col-sm-6">
                             <div class="form-check">
                                 <input class="form-check-input" 
-                                       type="checkbox" 
-                                       name="tags" 
-                                       value="{{ tag.id }}" 
-                                       id="tag_{{ tag.id }}"
-                                       {% if tag.id|stringformat:"s" in selected_tags %}checked{% endif %}>
+                                        type="checkbox" 
+                                        name="tags" 
+                                        value="{{ tag.id }}" 
+                                        id="tag_{{ tag.id }}"
+                                        {% if tag.id|stringformat:"s" in selected_tags %}checked{% endif %}>
                                 <label class="form-check-label" for="tag_{{ tag.id }}">
                                     {{ tag.name }}
                                 </label>
@@ -142,15 +142,22 @@
     {% for community in communities %}
     <div class="col-md-4 col-sm-6 mb-4">
         <div class="card h-100">
+            <!-- Logo - testuje-->
+            {% if community.logo %}
+            <img src="{{community.logo.url}}"
+                class="card-header"
+                alt="{{community.name}}"
+                style="height: 100px; object-fit: scale-down;">
+
             <!-- Zdjęcie -->
-            {% if community.photo_url %}
-            <img src="{{ community.photo_url }}" 
-                 class="card-img-top" 
-                 alt="{{ community.name }}" 
-                 style="height: 200px; object-fit: cover;">
+            {% if community.photo %}
+            <img src="{{ community.photo.url }}" 
+                class="card-img-top" 
+                alt="{{ community.name }}" 
+                style="height: 200px; object-fit: cover;">
             {% else %}
             <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
-                 style="height: 200px;">
+                style="height: 200px;">
                 <span class="text-muted display-4">{{ community.name|first|upper }}</span>
             </div>
             {% endif %}

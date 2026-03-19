@@ -3,17 +3,51 @@
 {% block title %}{{ community.name }} - Portal UNITED {% endblock %}
 
 {% block content %}
-    <div class="row">
-        <!-- Lewa kolumna - Zdjęcie i podstawowe info -->
-        <div class="col-md-8">
+<!-- DEBUG - usuń po teście -->
 
-            <!-- Zdjęcie główne -->
-            {% if community.photo %}
-            <img src="{{ community.photo.url }}" class="img-fluid rounded mb-4" alt="{{ community.name }}">
+    <!-- BANER GŁÓWNY - na całą szerokość, POZA grid row -->
+    <div style="position: relative; width: 100%; height: 250px; border-radius: 12px; overflow: hidden; margin-bottom: 2rem;">
+
+        {% if community.photo %}
+        <img src="{{ community.photo.url }}"
+            alt="{{ community.name }}"
+            style="width: 100%; height: 100%; object-fit: cover; display: block;">
+        {% else %}
+        <div style="width: 100%; height: 100%; background: #3C3489;"></div>
+        {% endif %}
+
+        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.35);"></div>
+
+        <div style="position: absolute; bottom: 20px; left: 24px; display: flex; align-items: flex-end; gap: 16px;">
+
+            {% if community.logo %}
+            <img src="{{ community.logo.url }}"
+                alt="Logo {{ community.name }}"
+                style="width: 120px; height: 120px; object-fit: contain; background: white; border-radius: 10px; border: 3px solid rgba(255,255,255,0.8); padding: 6px;">
+            {% else %}
+            <div style="width: 120px; height: 120px; background: white; border-radius: 10px; border: 3px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 500; color: #3C3489;">
+                {{ community.name|first|upper }}
+            </div>
             {% endif %}
 
-            <!-- Nazwa i opis -->
-            <h1>{{ community.name }}</h1>
+            <div style="padding-bottom: 4px;">
+                <h1 style="color: #fff; font-size: 26px; font-weight: 500; margin: 0 0 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
+                    {{ community.name }}
+                </h1>
+                <span style="color: rgba(255,255,255,0.9); font-size: 14px;">
+                    📍 {{ community.city }}
+                    {% if community.denomination %} · {{ community.get_denomination_display }}{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- GŁÓWNY GRID: lewa kolumna treść + prawa kolumna sidebar -->
+    <div class="row">
+
+        <!-- Lewa kolumna -->
+        <div class="col-md-8">
+
             <p class="lead">{{ community.description }}</p>
 
             <!-- Tagi -->
@@ -22,23 +56,19 @@
                 <span class="badge bg-primary">{{ tag.name }}</span>
                 {% endfor %}
             </div>
-            
-            
+
             <hr>
 
             <!-- Pełny opis -->
             <h3>O wspólnocie</h3>
             <p>{{ community.full_description|default:"Brak szczegółowego opisu." }}</p>
-            
+
             <!-- Członkowie -->
             <h3 class="mt-4">Członkowie ({{ members.count }})</h3>
 
-
             {% if members %}
             <div class="row">
-            <!-- <ul class="list-group"> -->
                 {% for membership in members %}
-                <!-- <li class="list-group-item"> -->
                 <div class="col-md-6 mb-3">
                     <div class="d-flex align-items-center">
                         <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3"
@@ -49,7 +79,7 @@
                             <strong>{{ membership.person.person_profile.first_name }} {{ membership.person.person_profile.last_name }}</strong>
                             {% if membership.role != 'member' %}
                             <br>
-                            <span class="badge 
+                            <span class="badge
                                 {% if membership.role == 'owner' %}bg-warning text-dark
                                 {% elif membership.role == 'admin' %}bg-info
                                 {% elif membership.role in 'leader,service_leader' %}bg-success
@@ -65,64 +95,39 @@
             {% else %}
             <p class="text-muted">Brak członków do wyświetlenia.</p>
             {% endif %}
-        </div>
 
-        <!-- Prawa kolumna - Sidebar z info i akcjami -->
-        
+        </div>
+        <!-- koniec col-md-8 -->
+
+        <!-- Prawa kolumna - Sidebar -->
         <div class="col-md-4">
 
-            <!-- Logo -->
-            {% if community.logo %}
-            <div class="text-center mb-4">
-                <img src="{{ community.logo.url }}" 
-                    alt="Logo {{ community.name }}"
-                    class="img-fluid"
-                    style="max-height: 150px;">
-            </div>
-            {% endif %}
-
             <!-- Karta z informacjami -->
-            <div class="card">
-                <!-- <div class="card-body">
-                    <h5 class="card-title">Informacje</h5>
-                    <p><strong>Miasto:</strong> {{ community.city }}</p>
-                    {% if community.parish %}
-                    <p><strong>Parafia:</strong> {{ community.parish }}</p>
-                    {% endif %}
-                    {% if community.denomination %}
-                    <p><strong>Denominacja:</strong> {{ community.get_denomination_display }}</p>
-                    {% endif %}
-                    {% if community.contact_email %}
-                    <p><strong>Email:</strong> <a href="mailto:{{ community.contact_email }}">{{ community.contact_email }}</a></p>
-                    {% endif %}
-                    {% if community.website %}
-                    <p><strong>Strona WWW:</strong> <a href="{{ community.website }}" target="_blank">Odwiedź</a></p>
-                    {% endif %}
-                </div> -->
+            <div class="card mb-3">
                 <div class="card-body">
                     <h5 class="card-title">Informacje</h5>
-                    
+
                     <ul class="list-unstyled">
                         <li class="mb-2">
                             <strong>📍 Miasto:</strong> {{ community.city }}
                         </li>
-                        
+
                         {% if community.parish %}
                         <li class="mb-2">
                             <strong>⛪ Parafia:</strong> {{ community.parish }}
                         </li>
                         {% endif %}
-                        
+
                         {% if community.denomination %}
                         <li class="mb-2">
-                            <strong>✝️ Denominacja:</strong> 
+                            <strong>✝️ Denominacja:</strong>
                             {{ community.get_denomination_display }}
                             {% if community.denomination == 'other' and community.denomination_other %}
                             ({{ community.denomination_other }})
                             {% endif %}
                         </li>
                         {% endif %}
-                        
+
                         {% if community.address %}
                         <li class="mb-2">
                             <strong>🏠 Adres:</strong><br>
@@ -130,7 +135,7 @@
                         </li>
                         {% endif %}
                     </ul>
-                    
+
                     <hr>
 
                     <h6>Kontakt</h6>
@@ -141,14 +146,14 @@
                             <a href="mailto:{{ community.contact_email }}">{{ community.contact_email }}</a>
                         </li>
                         {% endif %}
-                        
+
                         {% if community.contact_phone %}
                         <li class="mb-2">
                             <strong>📞 Telefon:</strong><br>
                             {{ community.contact_phone }}
                         </li>
                         {% endif %}
-                        
+
                         {% if community.website %}
                         <li class="mb-2">
                             <strong>🌐 Strona WWW:</strong><br>
@@ -158,42 +163,40 @@
                         </li>
                         {% endif %}
                     </ul>
-                    
+
                     {% if not community.contact_email and not community.contact_phone and not community.website %}
                     <p class="text-muted small mb-0">Brak danych kontaktowych.</p>
                     {% endif %}
                 </div>
             </div>
-            
+
             <!-- Przyciski zarządzania (dla owner/admin/leader) -->
             {% if user.is_authenticated and is_member %}
                 {% if user_membership.role in 'owner,admin,leader' %}
                 <div class="card mb-3">
                     <div class="card-body">
                         <h6 class="card-title">Zarządzanie</h6>
-                        <a href="{% url 'communities:community_manage' community.pk %}" 
-                        class="btn btn-primary w-100 mb-2">
+                        <a href="{% url 'communities:community_manage' community.pk %}"
+                            class="btn btn-primary w-100 mb-2">
                             ⚙️ Zarządzaj wspólnotą
                         </a>
-                        <a href="{% url 'communities:community_edit' community.pk %}" 
-                        class="btn btn-outline-primary w-100">
+                        <a href="{% url 'communities:community_edit' community.pk %}"
+                            class="btn btn-outline-primary w-100">
                             ✏️ Edytuj profil
                         </a>
                     </div>
                 </div>
                 {% endif %}
-            {% endif %}     
+            {% endif %}
 
-            <!-- Karta członkostwa - przyciski Dołącz/Opuść -->
+            <!-- Karta członkostwa -->
             <div class="card">
                 <div class="card-body">
                     <h6 class="card-title">Członkostwo</h6>
-                    
+
                     {% if user.is_authenticated %}
-                        <!-- Użytkownik ZALOGOWANY -->
-                        
+
                         {% if is_member %}
-                            <!-- Jest członkiem -->
                             <div class="alert alert-success mb-3">
                                 <strong>✓ Jesteś członkiem tej wspólnoty</strong>
                                 {% if user_membership.role != 'member' %}
@@ -201,10 +204,9 @@
                                 <span class="badge bg-info mt-1">{{ user_membership.get_role_display }}</span>
                                 {% endif %}
                             </div>
-                            
+
                             {% if can_leave %}
-                                <!-- Może opuścić (nie jest owner/admin) -->
-                                <form method="post" action="{% url 'communities:leave_community' community.pk %}" 
+                                <form method="post" action="{% url 'communities:leave_community' community.pk %}"
                                     onsubmit="return confirm('Czy na pewno chcesz opuścić tę wspólnotę?');">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-outline-danger w-100">
@@ -215,15 +217,13 @@
                                     Możesz wrócić w każdej chwili
                                 </small>
                             {% else %}
-                                <!-- Nie może opuścić (owner/admin) -->
                                 <p class="text-muted small mb-0">
-                                    Jako {{ user_membership.get_role_display }} nie możesz opuścić wspólnoty. 
+                                    Jako {{ user_membership.get_role_display }} nie możesz opuścić wspólnoty.
                                     Skontaktuj się z innym administratorem jeśli chcesz przekazać uprawnienia.
                                 </p>
                             {% endif %}
-                            
+
                         {% else %}
-                            <!-- NIE jest członkiem - pokaż przycisk "Dołącz" -->
                             <p class="mb-3">Dołącz aby uczestniczyć w życiu wspólnoty</p>
                             <form method="post" action="{% url 'communities:join_community' community.pk %}">
                                 {% csrf_token %}
@@ -232,28 +232,30 @@
                                 </button>
                             </form>
                         {% endif %}
-                        
+
                     {% else %}
-                        <!-- Użytkownik NIEZALOGOWANY -->
                         <div class="alert alert-info">
                             <strong>Chcesz dołączyć?</strong>
                             <p class="mb-2 small">Zaloguj się lub zarejestruj aby dołączyć do tej wspólnoty.</p>
                         </div>
-                        
-                        <a href="{% url 'account_login' %}?next={{ request.path }}" 
-                        class="btn btn-primary w-100 mb-2">
+                        <a href="{% url 'account_login' %}?next={{ request.path %}"
+                            class="btn btn-primary w-100 mb-2">
                             Zaloguj się
                         </a>
-                        <a href="{% url 'account_signup' %}?next={{ request.path }}" 
-                        class="btn btn-outline-primary w-100">
+                        <a href="{% url 'account_signup' %}?next={{ request.path %}"
+                            class="btn btn-outline-primary w-100">
                             Zarejestruj się
                         </a>
                     {% endif %}
+
                 </div>
             </div>
+            <!-- koniec karty członkostwa -->
+
         </div>
+        <!-- koniec col-md-4 -->
+
     </div>
+    <!-- koniec row -->
+
 {% endblock %}
-
-
-

@@ -23,7 +23,7 @@
                 {% endfor %}
                 {% endif %}
                 
-                <form method="post" id="communityForm">
+                <form method="post" id="communityForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <!-- SEKCJA 1: Podstawowe informacje -->
@@ -179,20 +179,20 @@
                             <div class="row">
                                 <!-- Zdjęcie główne -->
                                 <div class="col-md-6 mb-3">
-                                    <label for="{{ form.photo_url.id_for_label }}" class="form-label">
-                                        {{ form.photo_url.label }}
+                                    <label for="{{ form.photo.id_for_label }}" class="form-label">
+                                        {{ form.photo.label }}
                                     </label>
-                                    {{ form.photo_url }}
-                                    <small class="form-text text-muted">{{ form.photo_url.help_text }}</small>
+                                    {{ form.photo }}
+                                    <small class="form-text text-muted">{{ form.photo.help_text }}</small>
                                 </div>
                                 
                                 <!-- Logo -->
                                 <div class="col-md-6 mb-3">
-                                    <label for="{{ form.logo_url.id_for_label }}" class="form-label">
-                                        {{ form.logo_url.label }}
+                                    <label for="{{ form.logo.id_for_label }}" class="form-label">
+                                        {{ form.logo.label }}
                                     </label>
-                                    {{ form.logo_url }}
-                                    <small class="form-text text-muted">{{ form.logo_url.help_text }}</small>
+                                    {{ form.logo }}
+                                    <small class="form-text text-muted">{{ form.logo.help_text }}</small>
                                 </div>
                             </div>
                         </div>

@@ -81,9 +81,32 @@
     {% for community in communities %}
     <div class="col-md-4 mb-4">
         <div class="card h-100">
-            {% if community.photo_url %}
-            <img src="{{ community.photo_url }}" class="card-img-top" alt="{{ community.name }}" style="height: 200px; object-fit: cover;">
-            {% endif %}
+
+            <div style="position: relative; height: 110px; overflow: hidden; border-radius: 8px 8px 0 0;">
+
+                {% if community.photo %}
+                <img src="{{ community.photo.url }}"
+                    alt="{{ community.name }}"
+                    style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.25);"></div>
+                {% else %}
+                <div style="width: 100%; height: 100%; background: #e9ecef;"></div>
+                {% endif %}
+
+                <div style="position: absolute; bottom: 10px; left: 12px;">
+                    {% if community.logo %}
+                    <img src="{{ community.logo.url }}"
+                        alt="Logo {{ community.name }}"
+                        style="width: 56px; height: 56px; object-fit: contain; background: white; border-radius: 8px; border: 2px solid rgba(255,255,255,0.9); padding: 4px;">
+                    {% else %}
+                    <div style="width: 56px; height: 56px; background: white; border-radius: 8px; border: 2px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 500; color: var(--color-text-secondary);">
+                        {{ community.name|first|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+
             <div class="card-body">
                 <h5 class="card-title">{{ community.name }}</h5>
                 <p class="card-text">{{ community.description|truncatewords:20 }}</p>
