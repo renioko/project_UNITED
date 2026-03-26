@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     # 'communities',
     'communities.apps.CommunitiesConfig', # - zamiast 'communities'
     'accounts',
+    'activities',
     # Django-allauth wymaga 'sites' framework
     'django.contrib.sites',
     # Django-allauth - system autoryzacji
