@@ -1,0 +1,171 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Dashboard - Portal UNITED{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 4px;">
+            Dzień dobry, {{ user.username }}! 👋
+        </h1>
+        <p class="text-muted mb-0" style="font-size: 14px;">
+            Twój przegląd aktywności
+        </p>
+    </div>
+    <a href="{% url 'activities:event_create' %}" class="btn btn-primary">
+        ➕ Utwórz wydarzenie
+    </a>
+</div>
+
+<!-- Liczniki -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <p class="text-muted mb-1" style="font-size: 13px;">Moje wspólnoty</p>
+            <p class="mb-0" style="font-size: 24px; font-weight: 500;">{{ my_memberships.count }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <p class="text-muted mb-1" style="font-size: 13px;">Nadchodzące wydarzenia</p>
+            <p class="mb-0" style="font-size: 24px; font-weight: 500;">{{ upcoming_events.count }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <p class="text-muted mb-1" style="font-size: 13px;">Nowe ogłoszenia</p>
+            <p class="mb-0" style="font-size: 24px; font-weight: 500;">{{ recent_announcements.count }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <p class="text-muted mb-1" style="font-size: 13px;">Potrzebna pomoc</p>
+            <p class="mb-0" style="font-size: 24px; font-weight: 500;">-</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Lewa kolumna -->
+    <div class="col-md-8">
+
+        <!-- Nadchodzące wydarzenia -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">📅 Nadchodzące wydarzenia</h5>
+
+                {% if upcoming_events %}
+                    {% for event in upcoming_events %}
+                    <div style="border-left: 3px solid #3C3489; padding: 8px 12px; margin-bottom: 10px; background: #f8f9fa; border-radius: 0 6px 6px 0;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="mb-0 fw-500" style="font-size: 14px;">
+                                    <a href="{% url 'activities:event_detail' event.pk %}" class="text-decoration-none text-dark">
+                                        {{ event.title }}
+                                    </a>
+                                </p>
+                                <p class="mb-0 text-muted" style="font-size: 12px;">
+                                    {{ event.date_start|date:"D, d M Y, H:i" }}
+                                    {% if event.location %} · {{ event.location }}{% endif %}
+                                </p>
+                            </div>
+                            {% if not event.is_public %}
+                            <span class="badge bg-secondary ms-2">prywatne</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <a href="#" class="text-decoration-none" style="font-size: 13px; color: #3C3489;">
+                        Zobacz wszystkie →
+                    </a>
+                {% else %}
+                    <p class="text-muted mb-0" style="font-size: 14px;">
+                        Brak nadchodzących wydarzeń.
+                        <a href="{% url 'activities:event_create' %}">Utwórz pierwsze →</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ogłoszenia -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">📢 Ostatnie ogłoszenia</h5>
+
+                {% if recent_announcements %}
+                    {% for announcement in recent_announcements %}
+                    <div style="padding: 8px 0; border-bottom: 0.5px solid #e9ecef;">
+                        <p class="mb-0" style="font-size: 14px; font-weight: 500;">{{ announcement.title }}</p>
+                        <p class="mb-0 text-muted" style="font-size: 12px;">
+                            {% if announcement.community %}
+                                {{ announcement.community.name }}
+                            {% elif announcement.event %}
+                                {{ announcement.event.title }}
+                            {% endif %}
+                            · {{ announcement.created_at|timesince }} temu
+                        </p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0" style="font-size: 14px;">Brak ogłoszeń.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Prawa kolumna -->
+    <div class="col-md-4">
+
+        <!-- Moje wspólnoty -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">🏘️ Moje wspólnoty</h5>
+
+                {% if my_memberships %}
+                    {% for membership in my_memberships %}
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        {% if membership.community.logo %}
+                        <img src="{{ membership.community.logo.url }}"
+                            alt="{{ membership.community.name }}"
+                            style="width: 36px; height: 36px; object-fit: contain; border-radius: 6px; border: 1px solid #e9ecef;">
+                        {% else %}
+                        <div style="width: 36px; height: 36px; background: #3C3489; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 500; font-size: 14px; flex-shrink: 0;">
+                            {{ membership.community.name|first|upper }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <a href="{% url 'communities:community_detail' membership.community.pk %}"
+                                class="text-decoration-none text-dark"
+                                style="font-size: 14px; font-weight: 500;">
+                                {{ membership.community.name }}
+                            </a>
+                            <p class="mb-0 text-muted" style="font-size: 12px;">
+                                {{ membership.get_role_display }} · {{ membership.community.city }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <a href="{% url 'communities:community_list' %}"
+                        class="text-decoration-none"
+                        style="font-size: 13px; color: #3C3489;">
+                        Przeglądaj wszystkie wspólnoty →
+                    </a>
+                {% else %}
+                    <p class="text-muted mb-2" style="font-size: 14px;">
+                        Nie należysz jeszcze do żadnej wspólnoty.
+                    </p>
+                    <a href="{% url 'communities:community_list' %}" class="btn btn-outline-primary btn-sm">
+                        Znajdź wspólnotę
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

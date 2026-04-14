@@ -1,0 +1,154 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Nowe ogłoszenie - Portal UNITED{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            {% if community %}
+            <a href="{% url 'communities:community_detail' community.pk %}" class="btn btn-outline-secondary btn-sm">
+                ← Wróć do wspólnoty
+            </a>
+            {% elif event %}
+            <a href="{% url 'activities:event_detail' event.pk %}" class="btn btn-outline-secondary btn-sm">
+                ← Wróć do wydarzenia
+            </a>
+            {% else %}
+            <a href="{% url 'communities:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                ← Wróć do dashboardu
+            </a>
+            {% endif %}
+            <h1 style="font-size: 22px; font-weight: 500; margin: 0;">Nowe ogłoszenie</h1>
+        </div>
+
+        <!-- Info o kontekście -->
+        {% if community %}
+        <div class="alert alert-info mb-4">
+            📢 Tworzysz ogłoszenie dla wspólnoty <strong>{{ community.name }}</strong>
+        </div>
+        {% elif event %}
+        <div class="alert alert-info mb-4">
+            📢 Tworzysz ogłoszenie dla wydarzenia <strong>{{ event.title }}</strong>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- SEKCJA 1: Treść -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📝 Treść ogłoszenia</h5>
+                </div>
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            {{ form.title.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">
+                            {{ form.content.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                        <div class="text-danger small mt-1">{{ form.content.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SEKCJA 2: Kontekst (tylko jeśli brak pre-wypełnienia) -->
+            {% if not community and not event %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🏘️ Dotyczy</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Wybierz wspólnotę LUB wydarzenie – nie oba naraz.
+                    </p>
+
+                    <div class="mb-3">
+                        <label for="{{ form.community.id_for_label }}" class="form-label">
+                            {{ form.community.label }}
+                        </label>
+                        {{ form.community }}
+                        {% if form.community.errors %}
+                        <div class="text-danger small mt-1">{{ form.community.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.event.id_for_label }}" class="form-label">
+                            {{ form.event.label }}
+                        </label>
+                        {{ form.event }}
+                        {% if form.event.errors %}
+                        <div class="text-danger small mt-1">{{ form.event.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+            {% else %}
+            <!-- Ukryte pola gdy kontekst znany -->
+            {{ form.community }}
+            {{ form.event }}
+            {% endif %}
+
+            <!-- SEKCJA 3: Widoczność -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🔒 Widoczność</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        {{ form.is_public }}
+                        <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                            {{ form.is_public.label }}
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">{{ form.is_public.help_text }}</small>
+                    {% if form.is_public.errors %}
+                    <div class="text-danger small mt-1">{{ form.is_public.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Błędy ogólne -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Przyciski -->
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary">
+                    ✅ Opublikuj ogłoszenie
+                </button>
+                {% if community %}
+                <a href="{% url 'communities:community_detail' community.pk %}" class="btn btn-outline-secondary">Anuluj</a>
+                {% elif event %}
+                <a href="{% url 'activities:event_detail' event.pk %}" class="btn btn-outline-secondary">Anuluj</a>
+                {% else %}
+                <a href="{% url 'communities:dashboard' %}" class="btn btn-outline-secondary">Anuluj</a>
+                {% endif %}
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}

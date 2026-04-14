@@ -22,4 +22,5 @@ urlpatterns = [
     path('communities/<int:pk>/manage/', views.CommunityManageView.as_view(), name='community_manage'),
     path('communities/<int:pk>/member/<int:membership_id>/change-role/', views.change_member_role, name='change_member_role'),
     path('communities/<int:pk>/member/<int:membership_id>/remove/', views.remove_member, name='remove_member'),
+    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
 ]

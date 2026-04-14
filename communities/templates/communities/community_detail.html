@@ -101,7 +101,7 @@
 
         <!-- Prawa kolumna - Sidebar -->
         <div class="col-md-4">
-
+            
             <!-- Karta z informacjami -->
             <div class="card mb-3">
                 <div class="card-body">
@@ -184,6 +184,10 @@
                             class="btn btn-outline-primary w-100">
                             ✏️ Edytuj profil
                         </a>
+                        <a href="{% url 'activities:announcement_create' %}?community={{ community.pk }}"
+                            class="btn btn-outline-primary w-100 mt-2">
+                            📢 Dodaj ogłoszenie
+                        </a>
                     </div>
                 </div>
                 {% endif %}
@@ -238,11 +242,11 @@
                             <strong>Chcesz dołączyć?</strong>
                             <p class="mb-2 small">Zaloguj się lub zarejestruj aby dołączyć do tej wspólnoty.</p>
                         </div>
-                        <a href="{% url 'account_login' %}?next={{ request.path %}"
+                        <a href="{% url 'account_login' %}?next={ request.path %}"
                             class="btn btn-primary w-100 mb-2">
                             Zaloguj się
                         </a>
-                        <a href="{% url 'account_signup' %}?next={{ request.path %}"
+                        <a href="{% url 'account_signup' %}?next={ request.path %}"
                             class="btn btn-outline-primary w-100">
                             Zarejestruj się
                         </a>
@@ -251,7 +255,31 @@
                 </div>
             </div>
             <!-- koniec karty członkostwa -->
-
+            {% if user.is_authenticated and not is_member %}
+            <!-- Czy to jest dobre miejsce?-->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Obserwowanie</h6>
+                    {% if is_following %}
+                    <p class="text-muted small mb-2">Obserwujesz tę wspólnotę.</p>
+                    <form method="post" action="{% url 'activities:follow_community' community.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-secondary w-100 btn-sm">
+                            ➖ Przestań obserwować
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted small mb-2">Obserwuj aby śledzić publiczne aktywności.</p>
+                    <form method="post" action="{% url 'activities:follow_community' community.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-primary w-100 btn-sm">
+                            👁️ Obserwuj wspólnotę
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
         <!-- koniec col-md-4 -->
 

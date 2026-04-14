@@ -24,4 +24,5 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     # Główne URLe
     path('', include('communities.urls')),
+    path('activities/', include('activities.urls')),
 ]

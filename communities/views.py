@@ -5,11 +5,12 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView, ListView, DetailView, UpdateView, CreateView, DeleteView
+from django.views.generic import TemplateView, ListView, DetailView, UpdateView, CreateView, DeleteView, View
 from django.urls import reverse_lazy
 from .models import CommunityProfile, Tag, PersonProfile, Membership
 from .forms import CommunityCreateForm, CommunityEditForm
 from .mixins import CommunityAdminRequiredMixin, CommunityOwnerRequiredMixin, CommunityLeaderRequiredMixin
+from activities.querysets import get_events_for_user, get_announcements_for_user
 
 @login_required
 @require_POST  # Tylko POST request (bezpieczeństwo - nie da się kliknąć w link GET)
@@ -234,16 +235,16 @@ class CommunityDetailView(DetailView):
         return CommunityProfile.objects.filter(is_active=True).select_related('created_by').prefetch_related('tags')
     
     def get_context_data(self, **kwargs):
-        """Dodaj członków i status członkostwa do kontekstu"""
         context = super().get_context_data(**kwargs)
+        
+        # Członkowie wspólnoty
         context['members'] = self.object.memberships.filter(
             is_active=True
         ).select_related('person__person_profile').order_by('-joined_date')
 
-        # NOWE - sprawdź czy zalogowany użytkownik jest członkiem
         if self.request.user.is_authenticated:
+            # Status członkostwa
             try:
-                # Spróbuj znaleźć membership
                 membership = self.object.memberships.get(
                     person=self.request.user,
                     is_active=True
@@ -252,15 +253,23 @@ class CommunityDetailView(DetailView):
                 context['is_member'] = True
                 context['can_leave'] = membership.role not in ['owner', 'admin']
             except Membership.DoesNotExist:
-                # Nie jest członkiem
                 context['user_membership'] = None
                 context['is_member'] = False
                 context['can_leave'] = False
+
+            # Status obserwowania
+            from activities.models import Follow
+            context['is_following'] = Follow.objects.filter(
+                user=self.request.user,
+                community=self.object,
+            ).exists()
+
         else:
-            # Użytkownik niezalogowany
             context['user_membership'] = None
             context['is_member'] = False
             context['can_leave'] = False
+            context['is_following'] = False
+
         return context
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -677,3 +686,40 @@ def remove_member(request, pk, membership_id):
     )
     
     return redirect('communities:community_manage', pk=pk)
+
+# ===========================================================================
+# DASHBOARD - dodaj ten import na górze pliku views.py:
+# from activities.querysets import get_announcements_for_user, get_events_for_user
+# ===========================================================================
+
+class DashboardView(LoginRequiredMixin, View):
+    template_name = 'communities/dashboard.html'
+
+    def get(self, request):
+        user = request.user
+
+        # Wspólnoty użytkownika
+        my_memberships = Membership.objects.filter(
+            person=user,
+            is_active=True,
+        ).select_related('community').order_by('role')
+
+        # Nadchodzące wydarzenia (z querysets.py)
+        from activities.querysets import get_events_for_user, get_announcements_for_user
+        from django.utils import timezone
+
+        upcoming_events = get_events_for_user(user).filter(
+            date_start__gte=timezone.now()
+        ).order_by('date_start')[:5]
+
+        # Najnowsze ogłoszenia
+        recent_announcements = get_announcements_for_user(user).order_by(
+            '-created_at'
+        )[:5]
+
+        context = {
+            'my_memberships': my_memberships,
+            'upcoming_events': upcoming_events,
+            'recent_announcements': recent_announcements,
+        }
+        return render(request, self.template_name, context)

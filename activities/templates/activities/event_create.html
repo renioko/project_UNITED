@@ -1,0 +1,159 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Utwórz wydarzenie - Portal UNITED{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{% url 'communities:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                ← Wróć
+            </a>
+            <h1 style="font-size: 22px; font-weight: 500; margin: 0;">Utwórz wydarzenie</h1>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- SEKCJA 1: Podstawowe informacje -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 Podstawowe informacje</h5>
+                </div>
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            {{ form.title.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            {{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.location.id_for_label }}" class="form-label">
+                            {{ form.location.label }}
+                        </label>
+                        {{ form.location }}
+                        {% if form.location.errors %}
+                        <div class="text-danger small mt-1">{{ form.location.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SEKCJA 2: Data i czas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📅 Data i czas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.date_start.id_for_label }}" class="form-label">
+                                {{ form.date_start.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date_start }}
+                            {% if form.date_start.errors %}
+                            <div class="text-danger small mt-1">{{ form.date_start.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.date_end.id_for_label }}" class="form-label">
+                                {{ form.date_end.label }}
+                            </label>
+                            {{ form.date_end }}
+                            {% if form.date_end.errors %}
+                            <div class="text-danger small mt-1">{{ form.date_end.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEKCJA 3: Organizatorzy -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🏘️ Organizatorzy</h5>
+                </div>
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <label for="{{ form.owner_community.id_for_label }}" class="form-label">
+                            {{ form.owner_community.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.owner_community }}
+                        <small class="form-text text-muted">{{ form.owner_community.help_text }}</small>
+                        {% if form.owner_community.errors %}
+                        <div class="text-danger small mt-1">{{ form.owner_community.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.co_organizer_communities.label }}</label>
+                        <small class="form-text text-muted d-block mb-2">{{ form.co_organizer_communities.help_text }}</small>
+                        {{ form.co_organizer_communities }}
+                        {% if form.co_organizer_communities.errors %}
+                        <div class="text-danger small mt-1">{{ form.co_organizer_communities.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SEKCJA 4: Widoczność -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🔒 Widoczność</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        {{ form.is_public }}
+                        <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                            {{ form.is_public.label }}
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">{{ form.is_public.help_text }}</small>
+                    {% if form.is_public.errors %}
+                    <div class="text-danger small mt-1">{{ form.is_public.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Błędy ogólne -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Przyciski -->
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary">
+                    ✅ Utwórz wydarzenie
+                </button>
+                <a href="{% url 'communities:dashboard' %}" class="btn btn-outline-secondary">
+                    Anuluj
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}

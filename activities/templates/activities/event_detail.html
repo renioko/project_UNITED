@@ -1,0 +1,172 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}{{ event.title }} - Portal UNITED{% endblock %}
+
+{% block content %}
+
+    <!-- BANER WYDARZENIA -->
+    <div style="position: relative; width: 100%; height: 200px; border-radius: 12px; overflow: hidden; margin-bottom: 2rem; background: #3C3489;">
+        <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.35);"></div>
+        <div style="position: absolute; bottom: 20px; left: 24px;">
+            <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 0 0 4px;">
+                📅 {{ event.date_start|date:"D, d M Y, H:i" }}
+                {% if event.date_end %} – {{ event.date_end|date:"H:i" }}{% endif %}
+            </p>
+            <h1 style="color: #fff; font-size: 26px; font-weight: 500; margin: 0 0 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
+                {{ event.title }}
+            </h1>
+            {% if event.location %}
+            <span style="color: rgba(255,255,255,0.9); font-size: 14px;">
+                📍 {{ event.location }}
+            </span>
+            {% endif %}
+        </div>
+        {% if not event.is_public %}
+        <div style="position: absolute; top: 16px; right: 16px;">
+            <span class="badge bg-secondary">🔒 Prywatne</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- GŁÓWNY GRID -->
+    <div class="row">
+
+        <!-- Lewa kolumna - treść -->
+        <div class="col-md-8">
+
+            {% if event.description %}
+            <h3>O wydarzeniu</h3>
+            <p>{{ event.description }}</p>
+            <hr>
+            {% endif %}
+
+            <!-- Ogłoszenia eventu -->
+            <h3 class="mt-4">📢 Ogłoszenia</h3>
+            {% if announcements %}
+                {% for announcement in announcements %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="card-title mb-1">{{ announcement.title }}</h6>
+                            {% if not announcement.is_public %}
+                            <span class="badge bg-secondary ms-2">prywatne</span>
+                            {% endif %}
+                        </div>
+                        <p class="card-text">{{ announcement.content }}</p>
+                        <small class="text-muted">
+                            {{ announcement.created_at|date:"d M Y" }}
+                            {% if announcement.created_by %}
+                            · {{ announcement.created_by.username }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">Brak ogłoszeń dla tego wydarzenia.</p>
+            {% endif %}
+
+        </div>
+        <!-- koniec col-md-8 -->
+
+        <!-- Prawa kolumna - sidebar -->
+        <div class="col-md-4">
+
+            <!-- Organizatorzy -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">🏘️ Organizatorzy</h5>
+                    {% if organizers %}
+                        {% for ec in organizers %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            {% if ec.community.logo %}
+                            <img src="{{ ec.community.logo.url }}"
+                                alt="{{ ec.community.name }}"
+                                style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px; border: 1px solid #e9ecef;">
+                            {% else %}
+                            <div style="width: 32px; height: 32px; background: #3C3489; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 500; flex-shrink: 0;">
+                                {{ ec.community.name|first|upper }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <a href="{% url 'communities:community_detail' ec.community.pk %}"
+                                    class="text-decoration-none text-dark"
+                                    style="font-size: 13px; font-weight: 500;">
+                                    {{ ec.community.name }}
+                                </a>
+                                <p class="mb-0 text-muted" style="font-size: 11px;">
+                                    {{ ec.get_role_display }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">Brak przypisanych organizatorów.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Koordynatorzy -->
+            {% if coordinators %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">👤 Koordynatorzy</h5>
+                    {% for role in coordinators %}
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                            style="width: 32px; height: 32px; font-size: 13px; flex-shrink: 0;">
+                            {{ role.user.username|first|upper }}
+                        </div>
+                        <span style="font-size: 13px;">{{ role.user.username }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Zarządzanie (dla koordynatorów i adminów wspólnoty) -->
+            {% if can_manage %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">Zarządzanie</h6>
+                    <a href="#" class="btn btn-outline-primary w-100 btn-sm mb-2">
+                        ✏️ Edytuj wydarzenie
+                    </a>
+                    <a href="{% url 'activities:announcement_create' %}?event={{ event.pk }}"
+                    class="btn btn-outline-primary w-100 mt-2">
+                        📢 Dodaj ogłoszenie
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Obserwowanie -->
+            {% if user.is_authenticated %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">Obserwowanie</h6>
+                    <form method="post" action="{% url 'activities:follow_event' event.pk %}">
+                        {% csrf_token %}
+                        {% if is_following %}
+                        <p class="text-muted small mb-2">Obserwujesz to wydarzenie.</p>
+                        <button type="submit" class="btn btn-outline-secondary w-100 btn-sm">
+                            ➖ Przestań obserwować
+                        </button>
+                        {% else %}
+                        <p class="text-muted small mb-2">Obserwuj aby być na bieżąco.</p>
+                        <button type="submit" class="btn btn-outline-primary w-100 btn-sm">
+                            👁️ Obserwuj wydarzenie
+                        </button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+        <!-- koniec col-md-4 -->
+
+    </div>
+    <!-- koniec row -->
+
+{% endblock %}
