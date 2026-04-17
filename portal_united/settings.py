@@ -349,6 +349,12 @@ USE_I18N = True
 
 USE_TZ = True
 
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+
+# for safety 
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
 # ===========================================================================
 
 # MEDIA FILES (jeśli będziesz uploadować pliki)

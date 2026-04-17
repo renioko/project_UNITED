@@ -12,6 +12,9 @@ from .forms import CommunityCreateForm, CommunityEditForm
 from .mixins import CommunityAdminRequiredMixin, CommunityOwnerRequiredMixin, CommunityLeaderRequiredMixin
 from activities.querysets import get_events_for_user, get_announcements_for_user
 
+import json
+from django.conf import settings
+
 @login_required
 @require_POST  # Tylko POST request (bezpieczeństwo - nie da się kliknąć w link GET)
 def join_community(request, pk):
@@ -136,7 +139,7 @@ class HomeView(TemplateView):
 class CommunityListView(ListView):
     """Lista wspólnot"""
     model = CommunityProfile
-    template_name = 'communities/community_list.html'
+    template_name = 'communities/community_list2.html'
     context_object_name = 'communities'
     paginate_by = 12  # 12 wspólnot na stronę
 
@@ -378,6 +381,9 @@ class CommunityCreateView(LoginRequiredMixin, CreateView):
         # Nie zapisuj jeszcze do bazy (commit=False)
         community = form.save(commit=False)
         
+        #Ustaw full address:
+        # community.full_address = f"{community.address}, {community.city}, {community.country}"
+
         # Ustaw twórcę na zalogowanego użytkownika
         community.created_by = self.request.user
         
@@ -450,7 +456,11 @@ class CommunityEditView(CommunityLeaderRequiredMixin, UpdateView):
         """Komunikat sukcesu"""
         messages.success(self.request, f'✅ Profil wspólnoty "{self.community.name}" został zaktualizowany.')
         return super().form_valid(form)
-
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['GOOGLE_MAPS_API_KEY'] = settings.GOOGLE_MAPS_API_KEY
+        return context
 
 class CommunityManageView(CommunityLeaderRequiredMixin, TemplateView):
     """
@@ -723,3 +733,66 @@ class DashboardView(LoginRequiredMixin, View):
             'recent_announcements': recent_announcements,
         }
         return render(request, self.template_name, context)
+    
+class CommunityMapView(View):
+    """
+    Widok mapy wspólnot.
+    GET /communities/map/ → strona z mapą
+    GET /communities/map/data/ → JSON z danymi wspólnot (dla filtrowania AJAX)
+    """
+    template_name = 'communities/community_map2.html'
+    def get(self, request): 
+        # musze ustalic lokation, wokół ktorego szukam/filtruje lokalizacje wspolnot
+        # musze przefiltrowac lokalizacje współnot, które sa w obrebie wyszukiwania
+        # natstepnie przefiltrowac je przez tagi
+
+        # Pobierz wszystkie aktywne wspólnoty z lokalizacją (❗trzeba zrobic cache❓)
+        communities = CommunityProfile.objects.filter(
+                    is_active=True,
+                    latitude__isnull=False,
+                    longitude__isnull=False,
+                ).prefetch_related('tags')
+
+        # Filtrowanie po tagach (opcjonalne)
+        tag_slug = request.GET.get('tag')
+        if tag_slug:
+            communities = communities.filter(tags__slug=tag_slug)
+
+        # Przygotuj dane JSON dla mapy
+        communities_json = []
+        for c in communities:
+            communities_json.append({
+                'id': c.pk,
+                'name': c.name,
+                'city': c.city,
+                'lat': float(c.latitude) if c.latitude else None,
+                'lng': float(c.longitude) if c.longitude else None,
+                'denomination': c.get_denomination_display(),
+                'tags': [t.name for t in c.tags.all()],
+                'logo': c.logo.url if c.logo else None,
+                # 'url': f'/communities/{c.pk}/',
+                'url': c.get_absolute_url(),
+                'description': c.description[:100] + '...' if len(c.description) > 100 else c.description,
+            })
+
+        # Wszystkie tagi do filtrowania
+        all_tags = Tag.objects.filter(
+            communities__is_active=True,
+            communities__latitude__isnull=False,
+        ).distinct()
+
+        context = {
+            'communities_json': json.dumps(communities_json, ensure_ascii=False),
+            'all_tags': all_tags,
+            'selected_tag': tag_slug,
+            'GOOGLE_MAPS_API_KEY': settings.GOOGLE_MAPS_API_KEY,
+        }
+        return render(request, self.template_name, context)
+
+
+
+        # community_location = CommunityProfile.objects.filter()
+        # context = {
+        #     'community_location': community_location,
+        #     }
+        # return render(request, template_name='community_map.html', context='context') 

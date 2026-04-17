@@ -1,0 +1,283 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Lista wspólnot - Portal UNITED{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1>Wspólnoty religijne</h1>
+        <p class="text-muted">
+            Znajdź wspólnotę blisko siebie i dołącz do ich działalności
+        </p>
+    </div>
+</div>
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'communities:community_list' %}">📋 Lista</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'communities:community_map' %}">🗺️ Mapa</a>
+    </li>
+</ul>
+<!-- SEARCH BAR -->
+<form method="get" action="{% url 'communities:community_list' %}" class="mb-4">
+    <div class="row g-2 align-items-center">
+        
+        <!-- Main search -->
+        <div class="col-md-6">
+            <input type="text"
+                   name="search"
+                   class="form-control"
+                   placeholder="Szukaj po nazwie, opisie, mieście..."
+                   value="{{ current_search }}">
+        </div>
+
+        <!-- Submit -->
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                🔍 Szukaj
+            </button>
+        </div>
+
+        <!-- Toggle advanced -->
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#advancedSearch">
+                ⚙️ Filtry
+            </button>
+        </div>
+
+        <!-- Sort -->
+        <div class="col-md-2 text-md-end">
+            <select name="sort"
+                    class="form-select form-select-sm"
+                    onchange="this.form.submit()">
+                <option value="-created_at">Najnowsze</option>
+                <option value="name">Nazwa A-Z</option>
+                <option value="-name">Nazwa Z-A</option>
+                <option value="city">Miasto A-Z</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ADVANCED FILTERS -->
+    <div class="collapse mt-3" id="advancedSearch">
+        <div class="card card-body">
+
+            <div class="row g-3">
+                
+                <!-- City -->
+                <div class="col-md-4">
+                    <label class="form-label">📍 Miasto</label>
+                    <input type="text"
+                           name="city"
+                           class="form-control"
+                           value="{{ current_city }}">
+                </div>
+
+                <!-- Denomination -->
+                <div class="col-md-4">
+                    <label class="form-label">⛪ Denominacja</label>
+                    <select name="denomination" class="form-select">
+                        <option value="">Wszystkie</option>
+                        {% for value, label in denominations %}
+                        <option value="{{ value }}"
+                            {% if current_denomination == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- TAGS -->
+            {% if all_tags %}
+            <div class="mt-3">
+                <label class="form-label">🏷️ Charakter działalności</label>
+                <div class="row">
+                    {% for tag in all_tags %}
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="tags"
+                                   value="{{ tag.id }}"
+                                   id="tag_{{ tag.id }}"
+                                   {% if tag.id|stringformat:"s" in selected_tags %}checked{% endif %}>
+                            <label class="form-check-label" for="tag_{{ tag.id }}">
+                                {{ tag.name }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Buttons -->
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">
+                    Zastosuj filtry
+                </button>
+                <a href="{% url 'communities:community_list' %}" class="btn btn-outline-secondary">
+                    Wyczyść
+                </a>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<!-- RESULTS INFO -->
+{% if current_search or current_city or current_denomination or selected_tags %}
+<div class="alert alert-info">
+    <strong>Wyniki:</strong>
+    {{ page_obj.paginator.count }} wspólnot
+
+    {% if current_search %}
+        <br><small>Szukano: "{{ current_search }}"</small>
+    {% endif %}
+    {% if current_city %}
+        <br><small>Miasto: {{ current_city }}</small>
+    {% endif %}
+    {% if current_denomination %}
+        <br><small>Denominacja: {{ current_denomination }}</small>
+    {% endif %}
+    {% if selected_tags %}
+        <br><small>Tagi: {{ selected_tags|length }}</small>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- COMMUNITY LIST -->
+<div class="row">
+    {% for community in communities %}
+    <div class="col-md-4 col-sm-6 mb-4">
+        <div class="card h-100 shadow-sm">
+
+            <!-- IMAGE HEADER -->
+            <div style="position: relative; height: 140px; overflow: hidden;">
+
+                {% if community.photo %}
+                <img src="{{ community.photo.url }}"
+                     alt="{{ community.name }}"
+                     loading="lazy"
+                     style="width:100%; height:100%; object-fit:cover;">
+                <div style="position:absolute; inset:0; background:rgba(0,0,0,0.25);"></div>
+                {% else %}
+                <div style="width:100%; height:100%; background:#e9ecef;"></div>
+                {% endif %}
+
+                <!-- LOGO -->
+                <div style="position:absolute; bottom:10px; left:12px;">
+                    {% if community.logo %}
+                    <img src="{{ community.logo.url }}"
+                         alt="Logo {{ community.name }}"
+                         style="width:56px; height:56px; object-fit:contain; background:white; border-radius:8px; padding:4px;">
+                    {% else %}
+                    <div style="width:56px; height:56px; background:white; border-radius:8px;
+                                display:flex; align-items:center; justify-content:center;
+                                font-size:22px; font-weight:500;">
+                        {{ community.name|first|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- BODY -->
+            <div class="card-body d-flex flex-column">
+
+                <h5 class="card-title">{{ community.name }}</h5>
+
+                <p class="card-text flex-grow-1">
+                    {{ community.description|truncatewords:20 }}
+                </p>
+
+                <small class="text-muted mb-2">
+                    📍 {{ community.city }}
+                    {% if community.denomination %}
+                    <br>⛪ {{ community.get_denomination_display }}
+                    {% endif %}
+                    <br>👥 {{ community.get_member_count }} członków
+                </small>
+
+                <!-- TAGS -->
+                {% if community.tags.all %}
+                <div class="mb-2">
+                    {% for tag in community.tags.all %}
+                    <span class="badge bg-secondary">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <a href="{% url 'communities:community_detail' community.pk %}"
+                   class="btn btn-primary mt-auto">
+                    Zobacz profil
+                </a>
+
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center">
+        <div class="alert alert-warning">
+            <h5>Nie znaleziono wspólnot</h5>
+            <a href="{% url 'communities:community_list' %}">
+                Wyczyść filtry
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- PAGINATION -->
+{% if is_paginated %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page=1&search={{ current_search }}&city={{ current_city }}&denomination={{ current_denomination }}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Pierwsza
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.previous_page_number }}&search={{ current_search }}&city={{ current_city }}&denomination={{ current_denomination }}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Poprzednia
+            </a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">
+                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.next_page_number }}&search={{ current_search }}&city={{ current_city }}&denomination={{ current_denomination }}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Następna
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.paginator.num_pages }}&search={{ current_search }}&city={{ current_city }}&denomination={{ current_denomination }}{% for tag_id in selected_tags %}&tags={{ tag_id }}{% endfor %}">
+                Ostatnia
+            </a>
+        </li>
+        {% endif %}
+
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}

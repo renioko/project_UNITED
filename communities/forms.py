@@ -29,7 +29,10 @@ class CommunityCreateForm(forms.ModelForm):
             'name',
             'description',
             'city',
+            'country',
             'parish',
+            'latitude',
+            'longitude',
             'denomination',
             'denomination_other',
             'tags',
@@ -55,10 +58,22 @@ class CommunityCreateForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Np. Kraków'
             }),
+                'country': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Np. Polska'
+            }),
             'parish': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nazwa parafii (opcjonalne)'
             }),
+            'latitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '52.48018831646078', 
+            }),
+            'longitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder':'-1.8925135806710822',
+            }),          
             'denomination': forms.Select(attrs={
                 'class': 'form-select'
             }),
@@ -95,7 +110,10 @@ class CommunityCreateForm(forms.ModelForm):
             'name': 'Nazwa wspólnoty',
             'description': 'Krótki opis',
             'city': 'Miasto',
+            'country': 'Państwo',
             'parish': 'Parafia',
+            'latitude': 'Szerokość geograficzna',
+            'longitude': 'Długość geograficzna',
             'denomination': 'Denominacja',
             'denomination_other': 'Inna denominacja',
             'tags': 'Tagi (charakter działalności)',
@@ -108,6 +126,7 @@ class CommunityCreateForm(forms.ModelForm):
         
         # Teksty pomocnicze
         help_texts = {
+            'latitude': 'Współrzędne geograficzne',
             'description': 'Krótki opis który pojawi się na liście wspólnot (max 500 znaków)',
             'tags': 'Zaznacz wszystkie pasujące tagi - pomaga innym znaleźć Waszą wspólnotę',
             'photo': 'Link do zdjęcia głównego wspólnoty (później dodamy upload)',
@@ -124,10 +143,13 @@ class CommunityCreateForm(forms.ModelForm):
         self.fields['name'].required = True
         self.fields['description'].required = True
         self.fields['city'].required = True
+        self.fields['country'].required = True
         
         # Reszta pól opcjonalna
         self.fields['parish'].required = False
         self.fields['denomination'].required = False
+        self.fields['latitude'].required = False
+        self.fields['longitude'].required = False
         self.fields['denomination_other'].required = False
         self.fields['tags'].required = False
         self.fields['contact_email'].required = False
@@ -184,8 +206,11 @@ class CommunityEditForm(forms.ModelForm):
             'description',
             'full_description',
             'city',
+            'country',
             'parish',
             'address',
+            'latitude',
+            'longitude',
             'denomination',
             'denomination_other',
             'tags',
@@ -201,7 +226,10 @@ class CommunityEditForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'full_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
             'parish': forms.TextInput(attrs={'class': 'form-control'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-control'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'denomination': forms.Select(attrs={'class': 'form-select'}),
             'denomination_other': forms.TextInput(attrs={'class': 'form-control'}),

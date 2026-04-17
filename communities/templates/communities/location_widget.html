@@ -1,0 +1,184 @@
+<!-- SEKCJA: Lokalizacja -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">📍 Lokalizacja</h5>
+    </div>
+    <div class="card-body">
+
+        <p class="text-muted small mb-3">
+            Ustaw lokalizację swojego kościoła/parafii. Pojawi się ona na mapie wspólnot.
+        </p>
+
+        <!-- Automatyczne wyszukiwanie adresu -->
+        <div class="d-flex gap-2">
+            <input type="text"
+                id="location-search"
+                class="form-control"
+                placeholder="Zostaw puste aby użyć adresu ze formularza">
+            <button type="button" class="btn btn-outline-primary" onclick="searchLocation()">
+                🔍 Znajdź
+            </button>
+        </div>
+        <small class="form-text text-muted">
+            Kliknij "Znajdź" aby automatycznie zlokalizować adres wspólnoty, 
+            lub wpisz inny adres. Możesz też kliknąć bezpośrednio na mapę.
+        </small>
+
+        <!-- Wyszukiwarka adresu -->
+        <div class="mb-3">
+            <label class="form-label">Wyszukaj adres</label>
+            <div class="d-flex gap-2">
+                <input type="text"
+                    id="location-search"
+                    class="form-control"
+                    placeholder="Np. ul. Mariacka 5, Kraków">
+                <button type="button" class="btn btn-outline-primary" onclick="searchLocation()">
+                    🔍
+                </button>
+            </div>
+            <small class="form-text text-muted">
+                Wpisz adres i kliknij lupę, lub kliknij bezpośrednio na mapę.
+            </small>
+        </div>
+
+        <!-- Mapa do ustawiania lokalizacji -->
+        <div id="edit-map" style="height: 350px; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 12px;"></div>
+
+        <!-- Ukryte pola z współrzędnymi - wysyłane z formularzem -->
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label text-muted small">Szerokość geograficzna</label>
+                <input type="number"
+                    name="latitude"
+                    id="id_latitude"
+                    class="form-control form-control-sm"
+                    step="0.000001"
+                    value="{{ form.instance.latitude|default:'' }}"
+                    placeholder="np. 50.061389">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label text-muted small">Długość geograficzna</label>
+                <input type="number"
+                    name="longitude"
+                    id="id_longitude"
+                    class="form-control form-control-sm"
+                    step="0.000001"
+                    value="{{ form.instance.longitude|default:'' }}"
+                    placeholder="np. 19.937222">
+            </div>
+        </div>
+        {% if form.latitude.errors or form.longitude.errors %}
+        <div class="text-danger small mt-1">
+            {{ form.latitude.errors }} {{ form.longitude.errors }}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Skrypt mapy edycji -->
+<script>
+let editMap;
+let editMarker;
+
+function searchLocation() {
+    // Pobierz z pola wyszukiwania LUB złóż z pól formularza
+    const manualQuery = document.getElementById('location-search').value;
+    const address = document.getElementById('id_address')?.value || '';
+    const city = document.getElementById('id_city')?.value || '';
+    const country = document.getElementById('id_country')?.value || '';
+    
+    const query = manualQuery || `${address}, ${city}, ${country}`;
+    
+    if (!query.trim() || query === '') {
+        alert('Wpisz adres lub najpierw wypełnij pola Adres i Miasto.');
+        return;
+    }
+
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: query }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            const location = results[0].geometry.location;
+            editMap.setCenter(location);
+            editMap.setZoom(16);
+            placeMarker(location);
+        } else {
+            alert('Nie znaleziono adresu. Spróbuj wpisać dokładniejszy adres w pole wyszukiwania.');
+        }
+    });
+}
+
+function initEditMap() {
+    // Istniejące współrzędne lub centrum Polski
+    const existingLat = parseFloat(document.getElementById('id_latitude').value) || 52.0;
+    const existingLng = parseFloat(document.getElementById('id_longitude').value) || 19.0;
+    const hasLocation = document.getElementById('id_latitude').value !== '';
+
+    editMap = new google.maps.Map(document.getElementById('edit-map'), {
+        zoom: hasLocation ? 14 : 6,
+        center: { lat: existingLat, lng: existingLng },
+        mapTypeControl: false,
+        streetViewControl: false,
+    });
+
+    // Pokaż istniejący marker jeśli jest lokalizacja
+    if (hasLocation) {
+        placeMarker({ lat: existingLat, lng: existingLng });
+    }
+
+    // Kliknięcie na mapę → ustaw marker
+    editMap.addListener('click', (e) => {
+        placeMarker(e.latLng);
+    });
+}
+
+function placeMarker(position) {
+    // Usuń stary marker
+    if (editMarker) editMarker.setMap(null);
+
+    editMarker = new google.maps.Marker({
+        position: position,
+        map: editMap,
+        draggable: true, // Można przeciągać
+        title: 'Lokalizacja wspólnoty',
+    });
+
+    // Aktualizuj pola przy przeciąganiu
+    editMarker.addListener('dragend', (e) => {
+        updateCoordinates(e.latLng.lat(), e.latLng.lng());
+    });
+
+    updateCoordinates(
+        typeof position.lat === 'function' ? position.lat() : position.lat,
+        typeof position.lng === 'function' ? position.lng() : position.lng,
+    );
+}
+
+function updateCoordinates(lat, lng) {
+    document.getElementById('id_latitude').value = lat.toFixed(6);
+    document.getElementById('id_longitude').value = lng.toFixed(6);
+}
+
+function searchLocation() {
+    const query = document.getElementById('location-search').value;
+    if (!query) return;
+
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: query }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            const location = results[0].geometry.location;
+            editMap.setCenter(location);
+            editMap.setZoom(16);
+            placeMarker(location);
+        } else {
+            alert('Nie znaleziono adresu. Spróbuj podać dokładniejszy adres.');
+        }
+    });
+}
+</script>
+
+<!-- Google Maps API - dodaj na końcu strony, przed </body> lub w block extra_scripts -->
+<script
+    src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initEditMap"
+    async defer>
+</script>

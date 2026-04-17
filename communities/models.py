@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.validators import URLValidator
 from .validators import validate_image_file
 from cloudinary.models import CloudinaryField
+from django.urls import reverse
 
 class Tag(models.Model):
     """
@@ -56,6 +57,7 @@ class CommunityProfile(models.Model):
     slug = models.SlugField(max_length=200, unique=True, blank=True, verbose_name='Slug (URL)')
     description = models.TextField(verbose_name='Krótki opis', max_length=500)
     city = models.CharField(max_length=100, verbose_name='Miasto')
+    country = models.CharField(max_length=50, verbose_name='Państwo')
     parish = models.CharField(max_length=200, blank=True, verbose_name='Parafia')
 
     # Denominacja
@@ -121,6 +123,22 @@ class CommunityProfile(models.Model):
     # Status
     is_active = models.BooleanField(default=True, verbose_name='Profil aktywny')
     is_verified = models.BooleanField(default=False, verbose_name='Zweryfikowana')
+
+    # Mapy - lokalizacja - współrzędne geograficzne
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        verbose_name='Szerokość geograficzna',
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        verbose_name='Długość geograficzna',
+    )
     
     class Meta:
         verbose_name = 'Profil wspólnoty'
@@ -200,6 +218,9 @@ class CommunityProfile(models.Model):
             role__in=['owner', 'admin', 'leader'],
             is_active=True
         ).exists()
+    
+    def get_absolute_url(self):
+        return reverse('communities:community_detail', kwargs={'pk': self.pk})
 
 
 class PersonProfile(models.Model):
