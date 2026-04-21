@@ -11,12 +11,14 @@
     <!-- Nawigacja -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
+            <!-- Logo (klikalne) -->
             <a class="navbar-brand" href="{% url 'communities:home' %}">
-            <img src="https://res.cloudinary.com/dgz5epk5b/image/upload/v1776783005/logo_portal_united2_xljbge.png"
-                alt="Portal UNITED"
-                height="80"
-                class="me-2">
-                </div></nav>a>
+                <img src="https://res.cloudinary.com/dgz5epk5b/image/upload/v1776783005/logo_portal_united2_xljbge.png"
+                    alt="Portal UNITED"
+                    height="50"
+                    class="me-2">
+            </a>
+            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -68,7 +70,6 @@
             </div>
         </div>
     </nav>
-
     <!-- Zawartość -->
     <main class="container my-5">
         <!-- Wyświetlanie komunikatów Django (success, error, warning, info) -->
