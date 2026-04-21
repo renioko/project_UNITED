@@ -418,6 +418,11 @@ class CommunityCreateView(LoginRequiredMixin, CreateView):
         )
         return super().form_invalid(form)
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['GOOGLE_MAPS_API_KEY'] = settings.GOOGLE_MAPS_API_KEY
+        return context
+    
 class CommunityEditView(CommunityLeaderRequiredMixin, UpdateView):
     """
     Edycja profilu wspólnoty.
@@ -741,6 +746,7 @@ class CommunityMapView(View):
     GET /communities/map/data/ → JSON z danymi wspólnot (dla filtrowania AJAX)
     """
     template_name = 'communities/community_map2.html'
+    # template_name = 'communities/community_map_with_clustering.html'
     def get(self, request): 
         # musze ustalic lokation, wokół ktorego szukam/filtruje lokalizacje wspolnot
         # musze przefiltrowac lokalizacje współnot, które sa w obrebie wyszukiwania
@@ -751,12 +757,19 @@ class CommunityMapView(View):
                     is_active=True,
                     latitude__isnull=False,
                     longitude__isnull=False,
-                ).prefetch_related('tags')
+                )
 
         # Filtrowanie po tagach (opcjonalne)
         tag_slug = request.GET.get('tag')
         if tag_slug:
             communities = communities.filter(tags__slug=tag_slug)
+
+        # Optymalizacja: tylko potrzebne pola
+        communities = communities.prefetch_related('tags').only(
+            'id', 'name', 'city', 'latitude', 'longitude', 
+            'denomination', 'description', 'logo'
+        )[:500]
+        # communities = communities.prefetch_related('tags')[:500]
 
         # Przygotuj dane JSON dla mapy
         communities_json = []
@@ -782,16 +795,16 @@ class CommunityMapView(View):
         ).distinct()
 
         context = {
-            'communities_json': json.dumps(communities_json, ensure_ascii=False),
+            'communities_json': communities_json,
             'all_tags': all_tags,
             'selected_tag': tag_slug,
             'GOOGLE_MAPS_API_KEY': settings.GOOGLE_MAPS_API_KEY,
         }
         return render(request, self.template_name, context)
 
-
-
-        # community_location = CommunityProfile.objects.filter()
+        # Przyklad lokalizacji
+        # def get(self, request)
+        # community_location = CommunityProfile.objects.filter(# tutaj ładowac lokalizacje)
         # context = {
         #     'community_location': community_location,
         #     }

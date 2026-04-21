@@ -60,7 +60,7 @@
 const COMMUNITIES_DATA = JSON.parse(
     document.getElementById('communities-data').textContent
 );
-const GOOGLE_MAPS_API_KEY = '{{ GOOGLE_MAPS_API_KEY }}';
+//const GOOGLE_MAPS_API_KEY = '{{ GOOGLE_MAPS_API_KEY }}'; -> niepotrzebne
 </script>
 
 <script>
@@ -158,70 +158,157 @@ function createSidebarCard(community, marker, map) {
     return card;
 }
 
-function renderMarkers(communities) {
-    // Usuń stare markery
-    markers.forEach(m => m.setMap(null));
-    markers = [];
+// function renderMarkers(communities) {
+//     // Usuń stare markery
+//     markers.forEach(m => m.setMap(null));
+//     markers = [];
 
-    // Zaktualizuj licznik
-    document.getElementById('results-count').textContent =
-        `Znaleziono ${communities.length} wspólnot`;
+//     // Zaktualizuj licznik
+//     document.getElementById('results-count').textContent =
+//         `Znaleziono ${communities.length} wspólnot`;
 
-            // Lista boczna
-    const listEl = document.getElementById('community-list-sidebar');
-    listEl.innerHTML = '';
+//             // Lista boczna
+//     const listEl = document.getElementById('community-list-sidebar');
+//     listEl.innerHTML = '';
 
-    if (communities.length === 0) {
-        listEl.innerHTML = '<p class="text-muted">Brak wspólnot w tym filtrze.</p>';
-        return;
-    }
+//     if (communities.length === 0) {
+//         listEl.innerHTML = '<p class="text-muted">Brak wspólnot w tym filtrze.</p>';
+//         return;
+//     }
 
-    communities.forEach(community => {
-        // Marker na mapie
-        const marker = new google.maps.Marker({
-            position: { lat: community.lat, lng: community.lng },
-            map: map,
-            title: community.name,
-            icon: {
-                url: community.logo || null,
-                scaledSize: community.logo ? new google.maps.Size(36, 36) : null,
-            }
-        });
+//     communities.forEach(community => {
+//         // Marker na mapie
+//         const marker = new google.maps.Marker({
+//             position: { lat: community.lat, lng: community.lng },
+//             map: map,
+//             title: community.name,
+//             icon: {
+//                 url: community.logo || null,
+//                 scaledSize: community.logo ? new google.maps.Size(36, 36) : null,
+//             }
+//         });
 
-        // InfoWindow po kliknięciu markera
-        marker.addListener('click', () => {
-            infoWindow.setContent(`
-                <div style="max-width: 220px; font-family: sans-serif;">
-                    <p style="font-weight: 500; font-size: 14px; margin: 0 0 4px;">
-                        ${community.name}
-                    </p>
-                    <p style="font-size: 12px; color: #666; margin: 0 0 6px;">
-                        📍 ${community.city} · ${community.denomination}
-                    </p>
-                    <p style="font-size: 12px; margin: 0 0 8px;">${community.description}</p>
-                    <a href="${community.url}"
-                        style="font-size: 12px; color: #3C3489; text-decoration: none; font-weight: 500;">
-                        Zobacz profil →
-                    </a>
-                </div>
-            `);
-            infoWindow.open(map, marker);
-        });
+//         // InfoWindow po kliknięciu markera
+//         marker.addListener('click', () => {
+//             infoWindow.setContent(`
+//                 <div style="max-width: 220px; font-family: sans-serif;">
+//                     <p style="font-weight: 500; font-size: 14px; margin: 0 0 4px;">
+//                         ${community.name}
+//                     </p>
+//                     <p style="font-size: 12px; color: #666; margin: 0 0 6px;">
+//                         📍 ${community.city} · ${community.denomination}
+//                     </p>
+//                     <p style="font-size: 12px; margin: 0 0 8px;">${community.description}</p>
+//                     <a href="${community.url}"
+//                         style="font-size: 12px; color: #3C3489; text-decoration: none; font-weight: 500;">
+//                         Zobacz profil →
+//                     </a>
+//                 </div>
+//             `);
+//             infoWindow.open(map, marker);
+//         });
 
-        markers.push(marker);
+//         markers.push(marker);
 
-        // Karta w liście bocznej
-        const card = createSidebarCard(community, marker, map);
+//         // Karta w liście bocznej
+//         const card = createSidebarCard(community, marker, map);
 
-        listEl.appendChild(card);
-    });
-}
+//         listEl.appendChild(card);
+//     });
+// }
 </script>
 
 <!-- Google Maps API -->
 <script
     src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap"
     async defer>
+</script>
+
+<!-- Dodaje zeby był Clustering: -->
+<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+
+<script>
+function renderMarkers(communities) {
+    // Usuń stare markery
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    // Zaktualizuj licznik
+    const listEl = document.getElementById('community-list-sidebar');
+    listEl.innerHTML = '';
+
+    if (communities.length === 0) {
+        listEl.innerHTML = '<p class="text-muted">Brak wspólnot.</p>';
+        return;
+    }
+// Zaktualizuj licznik
+    document.getElementById('results-count').textContent =
+        `Znaleziono ${communities.length} wspólnot`;
+
+    communities.forEach(community => {
+        const marker = new google.maps.Marker({
+            position: { lat: community.lat, lng: community.lng },
+            title: community.name,
+        });
+
+        marker.addListener('click', () => {
+            infoWindow.setContent(`
+                <div style="max-width: 220px;">
+                    <p><strong>${community.name}</strong></p>
+                    <p>📍 ${community.city}</p>
+                </div>
+            `);
+            infoWindow.open(map, marker);
+        });
+
+        // TEN NIE DZIAŁA:
+        // marker.addListener('click', () => {
+        //     infoWindow.setContent(`
+        //         <div style="max-width: 220px; font-family: sans-serif;">
+        //             <p style="font-weight: 500; font-size: 14px; margin: 0 0 4px;">
+        //                 ${community.name}
+        //             </p>
+        //             <p style="font-size: 12px; color: #666; margin: 0 0 6px;">
+        //                 📍 ${community.city} · ${community.denomination}
+        //             </p>
+        //             <p style="font-size: 12px; margin: 0 0 8px;">${community.description}</p>
+        //             <a href="${community.url}"
+        //                 style="font-size: 12px; color: #3C3489; text-decoration: none; font-weight: 500;">
+        //                 Zobacz profil →
+        //             </a>
+        //         </div>
+        //     `);
+        //     infoWindow.open(map, marker);
+        // });
+
+        markers.push(marker);
+
+        const card = createSidebarCard(community, marker, map);
+        listEl.appendChild(card);
+    });
+
+    // ✅ CLUSTERING - grupuje markery automatycznie!
+    new markerClusterer.MarkerClusterer({ 
+        markers, 
+        map,
+        algorithm: new markerClusterer.SuperClusterAlgorithm({ radius: 100 })
+    });
+
+    // Aktualizuj listę boczną tylko dla widocznych
+    updateSidebar(communities.slice(0, 50));  // Max 50 w liście
+}
+
+function updateSidebar(communities) {
+    const listEl = document.getElementById('community-list-sidebar');
+    listEl.innerHTML = '';
+    
+    document.getElementById('results-count').textContent = 
+        `Znaleziono ${COMMUNITIES_DATA.length} wspólnot (pokazano ${communities.length})`;
+    
+    communities.forEach(community => {
+        const card = createSidebarCard(community, null, map);
+        listEl.appendChild(card);
+    });
+}
 </script>
 
 {% endblock %}

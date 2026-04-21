@@ -5,41 +5,30 @@
     </div>
     <div class="card-body">
 
-        <p class="text-muted small mb-3">
+        <p class="text small mb-3">
             Ustaw lokalizację swojego kościoła/parafii. Pojawi się ona na mapie wspólnot.
         </p>
 
-        <!-- Automatyczne wyszukiwanie adresu -->
-        <div class="d-flex gap-2">
-            <input type="text"
-                id="location-search"
-                class="form-control"
-                placeholder="Zostaw puste aby użyć adresu ze formularza">
-            <button type="button" class="btn btn-outline-primary" onclick="searchLocation()">
-                🔍 Znajdź
-            </button>
-        </div>
-        <small class="form-text text-muted">
-            Kliknij "Znajdź" aby automatycznie zlokalizować adres wspólnoty, 
-            lub wpisz inny adres. Możesz też kliknąć bezpośrednio na mapę.
-        </small>
-
-        <!-- Wyszukiwarka adresu -->
+        <!-- Wyszukiwanie adresu -->
         <div class="mb-3">
-            <label class="form-label">Wyszukaj adres</label>
+            <!-- <label class="form-label">Wyszukaj lokalizację</label> -->
             <div class="d-flex gap-2">
                 <input type="text"
                     id="location-search"
                     class="form-control"
                     placeholder="Np. ul. Mariacka 5, Kraków">
                 <button type="button" class="btn btn-outline-primary" onclick="searchLocation()">
-                    🔍
+                    🔍 Znajdź
                 </button>
             </div>
-            <small class="form-text text-muted">
-                Wpisz adres i kliknij lupę, lub kliknij bezpośrednio na mapę.
-            </small>
+            <!-- <small class="form-text text-muted">
+                Możesz wpisać adres ręcznie lub zostawić puste – użyjemy danych z formularza.
+            </small> -->
         </div>
+
+        <p class="small text-muted mb-2">
+            Kliknij na mapie lub przeciągnij marker, aby ustawić dokładną lokalizację.
+        </p>
 
         <!-- Mapa do ustawiania lokalizacji -->
         <div id="edit-map" style="height: 350px; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 12px;"></div>
@@ -48,24 +37,36 @@
         <div class="row">
             <div class="col-md-6">
                 <label class="form-label text-muted small">Szerokość geograficzna</label>
-                <input type="number"
+                <input type="hidden" 
+                name="latitude" 
+                id="id_latitude" 
+                value="{{ form.instance.latitude|default:'' }}">
+                <!-- <input type="text"
                     name="latitude"
                     id="id_latitude"
                     class="form-control form-control-sm"
                     step="0.000001"
                     value="{{ form.instance.latitude|default:'' }}"
-                    placeholder="np. 50.061389">
+                    placeholder="np. 50.061389"> -->
             </div>
             <div class="col-md-6">
                 <label class="form-label text-muted small">Długość geograficzna</label>
-                <input type="number"
+                <input type="hidden" 
+                name="longitude" 
+                id="id_longitude" 
+                value="{{ form.instance.longitude|default:'' }}">
+                <!-- <input type="text"
                     name="longitude"
                     id="id_longitude"
                     class="form-control form-control-sm"
                     step="0.000001"
                     value="{{ form.instance.longitude|default:'' }}"
-                    placeholder="np. 19.937222">
+                    placeholder="np. 19.937222"> -->
             </div>
+            <small class="text-muted">
+                Lat: <span id="lat-preview"></span> |
+                Lng: <span id="lng-preview"></span>
+            </small>
         </div>
         {% if form.latitude.errors or form.longitude.errors %}
         <div class="text-danger small mt-1">
@@ -81,19 +82,60 @@
 let editMap;
 let editMarker;
 
+// function searchLocation() {
+//     // Pobierz z pola wyszukiwania LUB złóż z pól formularza
+//     const manualQuery = document.getElementById('location-search').value;
+//     const address = document.getElementById('id_address')?.value || '';
+//     const city = document.getElementById('id_city')?.value || '';
+//     const country = document.getElementById('id_country')?.value || '';
+    
+//     const query = manualQuery || `${address}, ${city}, ${country}`;
+    
+//     if (!query.trim() || query === '') {
+//         alert('Wpisz adres lub najpierw wypełnij pola Adres i Miasto.');
+//         return;
+//     }
+
+//     const geocoder = new google.maps.Geocoder();
+//     geocoder.geocode({ address: query }, (results, status) => {
+//         if (status === 'OK' && results[0]) {
+//             const location = results[0].geometry.location;
+//             editMap.setCenter(location);
+//             editMap.setZoom(16);
+//             placeMarker(location);
+//         } else {
+//             alert('Nie znaleziono adresu. Spróbuj wpisać dokładniejszy adres w pole wyszukiwania.');
+//         }
+//     });
+// }
+
+
+// document.addEventListener('DOMContentLoaded', () => {
+//     document.getElementById('id_city')?.addEventListener('blur', searchLocation);
+// });
+
+function updateCoordinates(lat, lng) {
+    document.getElementById('id_latitude').value = lat.toFixed(6);
+    document.getElementById('id_longitude').value = lng.toFixed(6);
+
+    document.getElementById('lat-preview').textContent = lat.toFixed(6);
+    document.getElementById('lng-preview').textContent = lng.toFixed(6);
+}
+
 function searchLocation() {
-    // Pobierz z pola wyszukiwania LUB złóż z pól formularza
     const manualQuery = document.getElementById('location-search').value;
     const address = document.getElementById('id_address')?.value || '';
     const city = document.getElementById('id_city')?.value || '';
     const country = document.getElementById('id_country')?.value || '';
-    
+
     const query = manualQuery || `${address}, ${city}, ${country}`;
-    
-    if (!query.trim() || query === '') {
-        alert('Wpisz adres lub najpierw wypełnij pola Adres i Miasto.');
-        return;
-    }
+
+    if (!query.trim()) 
+    showError('Nie znaleziono adresu.');
+    // {
+    //     alert('Wpisz adres lub wypełnij pola adresowe.');
+    //     return;
+    // }
 
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ address: query }, (results, status) => {
@@ -103,7 +145,7 @@ function searchLocation() {
             editMap.setZoom(16);
             placeMarker(location);
         } else {
-            alert('Nie znaleziono adresu. Spróbuj wpisać dokładniejszy adres w pole wyszukiwania.');
+            alert('Nie znaleziono adresu.');
         }
     });
 }
@@ -121,6 +163,9 @@ function initEditMap() {
         streetViewControl: false,
     });
 
+    if (!isNaN(lat) && !isNaN(lng)) {
+    updateCoordinates(lat, lng);
+    }
     // Pokaż istniejący marker jeśli jest lokalizacja
     if (hasLocation) {
         placeMarker({ lat: existingLat, lng: existingLng });
@@ -154,27 +199,34 @@ function placeMarker(position) {
     );
 }
 
-function updateCoordinates(lat, lng) {
-    document.getElementById('id_latitude').value = lat.toFixed(6);
-    document.getElementById('id_longitude').value = lng.toFixed(6);
+function showError(message) {
+    const container = document.createElement('div');
+    container.className = 'alert alert-warning mt-2';
+    container.textContent = message;
+
+    document.getElementById('edit-map').before(container);
+
+    setTimeout(() => container.remove(), 4000);
 }
 
-function searchLocation() {
-    const query = document.getElementById('location-search').value;
-    if (!query) return;
 
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: query }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-            const location = results[0].geometry.location;
-            editMap.setCenter(location);
-            editMap.setZoom(16);
-            placeMarker(location);
-        } else {
-            alert('Nie znaleziono adresu. Spróbuj podać dokładniejszy adres.');
-        }
-    });
-}
+
+// function searchLocation() {
+//     const query = document.getElementById('location-search').value;
+//     if (!query) return;
+
+//     const geocoder = new google.maps.Geocoder();
+//     geocoder.geocode({ address: query }, (results, status) => {
+//         if (status === 'OK' && results[0]) {
+//             const location = results[0].geometry.location;
+//             editMap.setCenter(location);
+//             editMap.setZoom(16);
+//             placeMarker(location);
+//         } else {
+//             alert('Nie znaleziono adresu. Spróbuj podać dokładniejszy adres.');
+//         }
+//     });
+// }
 </script>
 
 <!-- Google Maps API - dodaj na końcu strony, przed </body> lub w block extra_scripts -->
