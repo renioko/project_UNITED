@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from communities.models import CommunityProfile
 
+from cloudinary.models import CloudinaryField
+from communities.validators import validate_image_file
 
 # ===========================================================================
 # EVENT
@@ -54,6 +56,13 @@ class Event(models.Model):
         default=True,
         verbose_name='Publiczne',
         help_text='Publiczne wydarzenia są widoczne dla wszystkich użytkowników portalu.',
+    )
+    image = CloudinaryField(
+        'image',
+        folder='activity_images/',
+        blank=True,
+        null=True,
+        validators=[validate_image_file],
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

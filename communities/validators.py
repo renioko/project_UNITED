@@ -14,6 +14,8 @@ def validate_image_file(image):
     - Format: jpg, jpeg, png, gif, webp
     - Czy to faktycznie obrazek (bezpieczeństwo)
     """
+    if not image:
+        return
     # CloudinaryResource jest już zwalidowany i na serwerze - pomijamy
     if isinstance(image, CloudinaryResource):
         return

@@ -207,11 +207,13 @@ LOGGING = {
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-if not DB_LIVE:  
-    STATICFILES_DIRS = [BASE_DIR / "static"]
-else:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# if not DB_LIVE:  
+#     STATICFILES_DIRS = [BASE_DIR / "static"]
+# else:
+#     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+if DB_LIVE:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # ============================================================================
 # AUTHENTICATION / ALLAUTH / EMAIL
 # ===========================================================================

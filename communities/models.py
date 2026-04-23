@@ -87,7 +87,7 @@ class CommunityProfile(models.Model):
 
     # Zdjecie
     photo = CloudinaryField('image',
-        folder='comminity_photos/',
+        folder='community_photos/',
         # upload_to='community_photos/',
         blank=True,
         null=True,

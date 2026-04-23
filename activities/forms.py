@@ -5,6 +5,8 @@ from django.db import models
 from communities.models import CommunityProfile, Membership
 from .models import Event, Announcement
 
+from communities.validators import validate_image_file
+
 class EventCreateForm(forms.ModelForm):
     """
     Formularz tworzenia wydarzenia.
@@ -37,6 +39,8 @@ class EventCreateForm(forms.ModelForm):
             'date_end',
             'location',
             'is_public',
+            # image
+            'image',
         ]
         widgets = {
             'title': forms.TextInput(attrs={
@@ -63,6 +67,11 @@ class EventCreateForm(forms.ModelForm):
             'is_public': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
             }),
+            # dodanie obrazka
+            'image': forms.FileInput(attrs={
+                'class': 'form-check-input',
+                'accept': 'image/*'
+            })
         }
         labels = {
             'title': 'Nazwa wydarzenia',
@@ -71,6 +80,7 @@ class EventCreateForm(forms.ModelForm):
             'date_end': 'Data i godzina zakończenia (opcjonalne)',
             'location': 'Miejsce',
             'is_public': 'Wydarzenie publiczne',
+            'image': 'Obraz',
         }
         help_texts = {
             'is_public': 'Publiczne wydarzenia są widoczne dla wszystkich. '
@@ -91,9 +101,28 @@ class EventCreateForm(forms.ModelForm):
 
         self.fields['owner_community'].queryset = my_communities
 
+        # Dodaje wymagane pola ❓
+        self.fields['title'].required = True
+        
         # Format daty dla datetime-local input
         self.fields['date_start'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['date_end'].input_formats = ['%Y-%m-%dT%H:%M']
+
+    # def _validate_image_field(self, field_name):
+    #     """
+    #     Helper - waliduje pole obrazka tylko jeśli to świeży upload.
+    #     CloudinaryResource = już na serwerze, pomijamy.
+    #     """
+    #     image = self.cleaned_data.get(field_name)
+    #     if image and not isinstance(image, CloudinaryResource):
+    #         validate_image_file(image)
+    #     return image
+    
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            validate_image_file(image)
+        return image
 
     def clean(self):
         cleaned_data = super().clean()
