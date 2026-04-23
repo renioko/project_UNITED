@@ -24,4 +24,6 @@ urlpatterns = [
     path('communities/<int:pk>/member/<int:membership_id>/remove/', views.remove_member, name='remove_member'),
     path('communities/map/', views.CommunityMapView.as_view(), name='community_map'),
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
+    # path('search/', views.community_search, name='community_search'),
+    path('api/search/', views.community_search_api, name='community_search_api'),
 ]

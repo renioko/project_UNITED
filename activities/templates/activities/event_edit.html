@@ -1,8 +1,7 @@
 {% extends 'communities/base.html' %}
-
 {% load static %}
 
-{% block title %}Utwórz wydarzenie - Portal UNITED{% endblock %}
+{% block title %}Edytuj wydarzenie - Portal UNITED{% endblock %}
 
 {% block content %}
 
@@ -10,10 +9,10 @@
     <div class="col-md-8">
 
         <div class="d-flex align-items-center gap-3 mb-4">
-            <a href="{% url 'communities:dashboard' %}" class="btn btn-outline-secondary btn-sm">
-                ← Wróć
+            <a href="{% url 'activities:event_detail' object.pk %}" class="btn btn-outline-secondary btn-sm">
+                ← Wróć do wydarzenia
             </a>
-            <h1 style="font-size: 22px; font-weight: 500; margin: 0;">Utwórz wydarzenie</h1>
+            <h1 style="font-size: 22px; font-weight: 500; margin: 0;">Edytuj wydarzenie</h1>
         </div>
 
         <form method="post" enctype="multipart/form-data">
@@ -95,6 +94,7 @@
                 </div>
                 <div class="card-body">
 
+                    <!-- Główny organizator -->
                     <div class="mb-3">
                         <label for="{{ form.owner_community.id_for_label }}" class="form-label">
                             {{ form.owner_community.label }} <span class="text-danger">*</span>
@@ -105,8 +105,8 @@
                         <div class="text-danger small mt-1">{{ form.owner_community.errors }}</div>
                         {% endif %}
                     </div>
-                    
-                    <!-- Współorganizatorzy - NOWA SEKCJA -->
+
+                    <!-- Współorganizatorzy -->
                     <div class="mb-3">
                         <label class="form-label">Współorganizatorzy (opcjonalnie)</label>
                         
@@ -129,21 +129,7 @@
                         {{ form.co_organizers }}
                     </div>
 
-                    <!-- Wyszukiwanie wspolorganizatorow: -->
-                    <!-- <div class="mb-3">
-                        <label class="form-label">Dodaj współorganizatorów</label>
-
-                        <div class="d-flex gap-2 mb-2">
-                            <input type="text" id="search-name" class="form-control" placeholder="Nazwa wspólnoty">
-                            <input type="text" id="search-city" class="form-control" placeholder="Miasto">
-                            <input type="text" id="search-country" class="form-control" placeholder="Państwo">
-                            <button type="button" class="btn btn-outline-primary" onclick="searchCommunities()">🔍</button>
-                        </div>
-                        <div id="search-results" class="list-group mb-2"></div>
-                        <div id="selected-communities" class="mt-2"></div>
-                        <input type="hidden" name="co_organizers" id="id_co_organizers">
-                    </div>
-                </div> -->
+                </div>
             </div>
 
             <!-- SEKCJA 4: Widoczność -->
@@ -175,9 +161,9 @@
             <!-- Przyciski -->
             <div class="d-flex gap-3">
                 <button type="submit" class="btn btn-primary">
-                    ✅ Utwórz wydarzenie
+                    ✅ Zapisz zmiany
                 </button>
-                <a href="{% url 'communities:dashboard' %}" class="btn btn-outline-secondary">
+                <a href="{% url 'activities:event_detail' object.pk %}" class="btn btn-outline-secondary">
                     Anuluj
                 </a>
             </div>
@@ -188,9 +174,7 @@
 
 {% endblock %}
 
-
 {% block extra_js %}
-
 <!-- Ładuj widget Community Picker -->
 {% include 'communities/community_picker_modal.html' %}
 <script src="{% static 'communities/js/community_picker.js' %}"></script>
@@ -206,6 +190,42 @@
     const selectedContainer = document.getElementById('selected-co-organizers');
     const hiddenInput = document.getElementById('id_co_organizers');
 
+    // Załaduj istniejących współorganizatorów z hidden inputa
+    function loadExistingCoOrganizers() {
+        const existingIds = hiddenInput.value;
+        if (!existingIds) {
+            renderCoOrganizers();
+            return;
+        }
+
+        // Parsuj IDs
+        const ids = existingIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        
+        // Dla każdego ID pobierz dane wspólnoty (możemy to zrobić jednym requestem)
+        if (ids.length > 0) {
+            // Fetch danych wspólnot
+            Promise.all(ids.map(id => fetchCommunityData(id)))
+                .then(communities => {
+                    selectedCoOrganizers = communities.filter(c => c !== null);
+                    renderCoOrganizers();
+                    updateAddButton();
+                });
+        }
+    }
+
+    // Pobierz dane wspólnoty po ID
+    function fetchCommunityData(communityId) {
+        return fetch(`/api/search/?q=`)
+            .then(res => res.json())
+            .then(communities => {
+                return communities.find(c => c.id === communityId) || null;
+            })
+            .catch(err => {
+                console.error('Błąd pobierania danych wspólnoty:', err);
+                return null;
+            });
+    }
+
     // Kliknięcie "Dodaj współorganizatora"
     addBtn.addEventListener('click', () => {
         if (selectedCoOrganizers.length >= MAX_CO_ORGANIZERS) {
@@ -213,7 +233,6 @@
             return;
         }
 
-        // Otwórz widget wyboru
         CommunityPicker.open((community) => {
             addCoOrganizer(community);
         });
@@ -221,16 +240,12 @@
 
     // Dodaj współorganizatora
     function addCoOrganizer(community) {
-        // Sprawdź czy już nie został dodany
         if (selectedCoOrganizers.find(c => c.id === community.id)) {
             alert('Ta wspólnota została już dodana jako współorganizator.');
             return;
         }
 
-        // Dodaj do listy
         selectedCoOrganizers.push(community);
-        
-        // Odśwież widok
         renderCoOrganizers();
         updateHiddenInput();
         updateAddButton();
@@ -263,7 +278,6 @@
                 <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.7rem;" aria-label="Usuń"></button>
             `;
 
-            // Obsługa usuwania
             badge.querySelector('.btn-close').addEventListener('click', () => {
                 removeCoOrganizer(community.id);
             });
@@ -289,8 +303,7 @@
         }
     }
 
-    // Inicjalizacja
-    renderCoOrganizers();
+    // Inicjalizacja - załaduj istniejących współorganizatorów
+    loadExistingCoOrganizers();
 </script>
-
 {% endblock %}

@@ -16,19 +16,17 @@ class EventCreateForm(forms.ModelForm):
     # Główny organizator - wymagany
     owner_community = forms.ModelChoiceField(
         queryset=CommunityProfile.objects.none(),  # Wypełniane w __init__
+        required=True,
         label='Główny organizator',
         help_text='Wspólnota odpowiedzialna za wydarzenie.',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
 
-    # Współorganizatorzy - opcjonalni
-    co_organizer_communities = forms.ModelMultipleChoiceField(
-        queryset=CommunityProfile.objects.none(),  # Wypełniane w __init__
-        label='Współorganizatorzy (opcjonalne)',
+    # Współorganizatorzy - opcjonalni == ZOSTAWIAM NA RAZIE 🚩🚩
+    co_organizers = forms.CharField(
         required=False,
-        help_text='Inne wspólnoty współorganizujące wydarzenie.',
-        widget=forms.CheckboxSelectMultiple(),
-    )
+        widget=forms.HiddenInput()
+    ) # to przechowuje id wybranych wspólnot
 
     class Meta:
         model = Event
@@ -92,7 +90,6 @@ class EventCreateForm(forms.ModelForm):
         ).distinct()
 
         self.fields['owner_community'].queryset = my_communities
-        self.fields['co_organizer_communities'].queryset = my_communities
 
         # Format daty dla datetime-local input
         self.fields['date_start'].input_formats = ['%Y-%m-%dT%H:%M']
@@ -110,6 +107,26 @@ class EventCreateForm(forms.ModelForm):
             self.add_error('date_end', 'Data zakończenia musi być późniejsza niż data rozpoczęcia.')
 
         return cleaned_data
+    
+    #  DO ZMIANY ===== 🚩🚩🚩
+    # def clean_co_organizers(self):
+    #     data = self.cleaned_data.get('co_organizers')
+
+    #     if not data:
+    #         return []
+
+    #     try:
+    #         # ids = [int(x) for x in data.split(',') if x]
+    #         ids = [int(x.strip()) for x in data.split(',') if x.strip()]
+    #     except ValueError:
+    #         raise forms.ValidationError("Nieprawidłowe dane wspólnot.")
+
+    #     # 🔒 zabezpieczenie – czy wspólnoty istnieją
+    #     valid_ids = CommunityProfile.objects.filter(
+    #         id__in=ids,
+    #         is_active=True).values_list('id', flat=True)
+
+    #     return list(valid_ids)
     
 
 class AnnouncementCreateForm(forms.ModelForm):

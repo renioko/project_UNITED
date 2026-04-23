@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import CreateView, DetailView
+from django.views.generic import CreateView, DetailView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 
 from django.contrib.auth.decorators import login_required
@@ -11,6 +11,8 @@ from django.views.decorators.http import require_POST
 from communities.models import CommunityProfile, Membership
 from .models import Follow, Event, EventCommunity, EventRole
 from .forms import EventCreateForm
+
+
 
 class EventCreateView(LoginRequiredMixin, CreateView):
     """
@@ -51,7 +53,7 @@ class EventCreateView(LoginRequiredMixin, CreateView):
         kwargs['user'] = self.request.user
         return kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form):       
         # Zapisz event
         event = form.save(commit=False)
         event.created_by = self.request.user
@@ -67,16 +69,24 @@ class EventCreateView(LoginRequiredMixin, CreateView):
                 role='owner',
             )
 
-        # Ustaw współorganizatorów
-        co_organizers = form.cleaned_data.get('co_organizer_communities')
-        if co_organizers:
-            for community in co_organizers:
-                if community != owner_community:
-                    EventCommunity.objects.create(
-                        event=event,
-                        community=community,
-                        role='co_organizer',
-                    )
+        # Ustaw współorganizatorów == zmienione 🚩🚩🚩🚩
+        co_organizers_str = form.cleaned_data.get('co_organizers', '')
+        co_ids = []
+
+        if co_organizers_str:
+            try:
+                co_ids = [int(x.strip()) for x in co_organizers_str.split(',') if x.strip()]
+            except ValueError:
+                messages.error(self.request, 'Nieprawidłowe dane współorganizatorów.')
+                return self.form_invalid(form)
+
+        for cid in co_ids:
+            if cid != owner_community.id:
+                EventCommunity.objects.create(
+                    event=event,
+                    community_id=cid,
+                    role='co_organizer',
+                )
 
         # Twórca eventu dostaje rolę owner eventu
         EventRole.objects.create(
@@ -85,8 +95,12 @@ class EventCreateView(LoginRequiredMixin, CreateView):
             role='owner',
         )
 
+        self.object = event
+        
         messages.success(request=self.request, message=f'Wydarzenie "{event.title}" zostało utworzone!')
         return redirect(self.success_url)
+
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -97,8 +111,7 @@ class EventCreateView(LoginRequiredMixin, CreateView):
             memberships__is_active=True,
         )
         return context
-
-
+        
 class EventDetailView(DetailView):
     """Widok szczegółu wydarzenia."""
     model = Event
@@ -122,6 +135,188 @@ class EventDetailView(DetailView):
 
         return context
     
+class EventUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Edycja istniejącego wydarzenia.
+    Dostęp: owner eventu lub owner/admin głównej wspólnoty organizującej.
+    """
+    model = Event
+    template_name = 'activities/event_edit.html'
+    form_class = EventCreateForm
+
+    def dispatch(self, request, *args, **kwargs):
+        """Sprawdź uprawnienia do edycji."""
+        event = self.get_object()
+
+        # Sprawdź czy user jest ownerem eventu
+        is_event_owner = EventRole.objects.filter(
+            event=event,
+            user=request.user,
+            role='owner'
+        ).exists()
+
+        # Sprawdź czy user jest ownerem/adminem głównej wspólnoty
+        owner_community = EventCommunity.objects.filter(
+            event=event,
+            role='owner'
+        ).first()
+
+        is_community_admin = False
+        if owner_community:
+            is_community_admin = Membership.objects.filter(
+                community=owner_community.community,
+                person=request.user,
+                role__in=['admin', 'owner'], # mozna rozszeżyc na inne role 💡
+                is_active=True, # active membership
+            ).exists()
+        
+        if not (is_event_owner or is_community_admin):
+            messages.error(
+                request, 
+                'Nie masz uprawnień do edycji tego wydarzenia.',
+            )
+            return redirect('communities:dashboard')
+
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_form_kwargs(self):
+        """Przekaż usera do formularza."""
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_initial(self):
+        """Ustaw początkowe wartości formularza."""
+        initial =  super().get_initial()
+        event = self.get_object()
+
+        # Ustaw głownego organizatora
+        owner_community = EventCommunity.objects.filter(
+            event=event,
+            role='owner'
+        ).first()
+
+        if owner_community:
+            initial['owner_community'] = owner_community.community
+
+        # Ustaw współorganizatorów (jako CSV ids)
+        co_organizers = EventCommunity.objects.filter(
+            event=event,
+            role='co_organizer',
+        ).values_list('community_id', flat=True)
+
+        if co_organizers:
+            initial['co_organizers'] = ','.join(map(str, co_organizers))
+        
+        return initial
+    
+    def form_valid(self, form):
+        """Zapisz zmiany w evencie i zaktualizuj powiązania ze wspólnotami."""
+        event = form.save(commit=False)
+        event.save()
+
+        # === AKTUALIZACJA GŁÓWNEGO ORGANIZATORA ===
+        new_owner_community = form.cleaned_data.get('owner_community')
+
+        # Usuń poprzedniego głównego organizatora
+        EventCommunity.objects.filter(
+            event=event,
+            role='owner'
+        ).delete()
+
+        # Dodaj nowego
+        if new_owner_community:
+            EventCommunity.objects.create(
+                event=event,
+                community=new_owner_community,
+                role='owner',
+            )
+        
+        # === AKTUALIZACJA WSPÓŁORGANIZATORÓW ===
+        new_co_organizers_str = form.cleaned_data.get('co_organizers', '')
+        co_ids = []
+
+        if new_co_organizers_str:
+            try:
+                co_ids = [int(x.strip()) for x in new_co_organizers_str.split(',') if x.strip()]
+
+            except ValueError:
+                messages.error(self.request, 'Nieprawidłowe dane współorganizatorów.')
+                return self.form_invalid(form)
+            
+        # Usuń poprzednich współorganizatorów
+        EventCommunity.objects.filter(
+            event=event,
+            role='co_organizer',
+        ).delete()
+        # Dodaj nowych (bez duplikatów z głównym organizatorem)
+        for cid in co_ids:
+            if new_owner_community and cid != new_owner_community.id:
+                EventCommunity.objects.create(
+                    event=event,
+                    community_id=cid,
+                    role='co_organizer',
+                )
+        messages.success(self.request, f'Wydarzenie "{event.title}" zostało zaktualizowane!')
+        return redirect('activities:event_detail', pk=event.pk)
+
+class EventDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    Usuwanie wydarzenia.
+    
+    Dostęp: tylko owner eventu lub owner głównej wspólnoty organizującej.
+    """
+    model = Event
+    template_name = 'activities/event_confirm_delete.html'
+    success_url = reverse_lazy('communities:dashboard')
+
+    def dispatch(self, request, *args, **kwargs):
+        """Sprawdź uprawnienia do usunięcia."""
+        event = self.get_object()
+
+        # Sprawdź czy user jest ownerem eventu
+        is_event_owner = EventRole.objects.filter(
+            event=event,
+            user=request.user,
+            role='owner',
+        ).exists()
+
+        # Sprawdź czy user jest ownerem głównej wspólnoty
+        owner_community = EventCommunity.objects.filter(
+            event=event,
+            role='owner',
+        ).first()
+
+        is_community_owner = False
+        if owner_community:
+            is_community_owner = Membership.objects.filter(
+                community=owner_community.community,
+                person=request.user,
+                role='owner',
+                is_active=True,
+            ).exists()
+
+        if not (is_event_owner or is_community_owner):
+            messages.error(
+                self.request,
+                'Nie masz uprawnień do usunięcia tego wydarzenia. Tylko właściciel eventu lub właściciel głównej wspólnoty może usunąć wydarzenie.'
+                )
+            return redirect('communities:dashboard')
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def delete(self, request, *args, **kwargs):
+        """Usuń wydarzenie z komunikatem."""
+
+        event = self.get_object()
+        event_title = event.title
+
+        response = super().delete(request, *args, **kwargs)
+
+        messages.success(request, f'Wydarzenie "{event_title}" zostało usunięte.')
+        return response
+    
+
 
 @login_required
 @require_POST

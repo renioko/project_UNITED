@@ -1,0 +1,57 @@
+{% extends 'communities/base.html' %}
+
+{% block title %}Usuń wydarzenie - Portal UNITED{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{% url 'activities:event_detail' object.pk %}" class="btn btn-outline-secondary btn-sm">
+                ← Wróć do wydarzenia
+            </a>
+            <h1 style="font-size: 22px; font-weight: 500; margin: 0;">Usuń wydarzenie</h1>
+        </div>
+
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">⚠️ Potwierdzenie usunięcia</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Czy na pewno chcesz usunąć wydarzenie:</p>
+                
+                <div class="alert alert-light border">
+                    <h5 class="mb-2">{{ object.title }}</h5>
+                    <p class="mb-1">
+                        <strong>Data:</strong> {{ object.date_start|date:"d.m.Y H:i" }}
+                    </p>
+                    <p class="mb-0">
+                        <strong>Miejsce:</strong> {{ object.location|default:"Nie podano" }}
+                    </p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Uwaga!</strong> Ta operacja jest nieodwracalna. 
+                    Wszystkie dane związane z wydarzeniem zostaną trwale usunięte.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-danger">
+                            🗑️ Tak, usuń wydarzenie
+                        </button>
+                        <a href="{% url 'activities:event_detail' object.pk %}" class="btn btn-outline-secondary">
+                            Anuluj
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

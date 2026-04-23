@@ -25,4 +25,5 @@ urlpatterns = [
     # Główne URLe
     path('', include('communities.urls')),
     path('activities/', include('activities.urls')),
+    # path('communities/', include('communities.urls')),
 ]

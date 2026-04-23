@@ -14,6 +14,8 @@ from activities.querysets import get_events_for_user, get_announcements_for_user
 
 import json
 from django.conf import settings
+import traceback
+
 
 @login_required
 @require_POST  # Tylko POST request (bezpieczeństwo - nie da się kliknąć w link GET)
@@ -515,6 +517,36 @@ class CommunityManageView(CommunityLeaderRequiredMixin, TemplateView):
         
         return context
 
+#  zmienione ==== 🚩🚩🚩🚩🚩
+def community_search_api(request): 
+    """API do wyszukiwania wspólnot - używane przez widget"""
+    # try:
+    query = request.GET.get('q', '')
+    communities = CommunityProfile.objects.filter(is_active=True)
+    if query:
+        communities = communities.filter(
+            Q(name__icontains=query)|
+            Q(city__icontains=query)|
+            Q(country__icontains=query)
+            )
+        results = communities.order_by("name")[:10]
+        data = [
+            {
+                "id": c.id,
+                "name": c.name or "",
+                "city": c.city or "",
+                "country": c.country or "",
+            }
+            for c in results
+        ]
+#         print(f"Returning {len(data)} results")  # 👈 DEBUG
+            
+        return JsonResponse(data, safe=False)
+        
+#     except Exception as e:
+#         print(f"ERROR in community_search: {e}")  # 👈 DEBUG
+#         traceback.print_exc()
+#         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 @require_POST

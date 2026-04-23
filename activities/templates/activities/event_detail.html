@@ -129,9 +129,27 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <h6 class="card-title">Zarządzanie</h6>
-                    <a href="#" class="btn btn-outline-primary w-100 btn-sm mb-2">
+                    <!-- Nie wiem czy tutaj? 🚩❓ -->
+                    <!-- Gdzieś w event_detail.html, np. pod tytułem -->
+
+                    {% if user.is_authenticated %}
+                        <div class="mt-3 d-flex gap-2">
+                            <a href="{% url 'activities:event_edit' event.pk %}" class="btn btn-warning btn-sm">
+                                ✏️ Edytuj wydarzenie
+                            </a>
+                            <a href="{% url 'activities:event_delete' event.pk %}" class="btn btn-danger btn-sm">
+                                🗑️ Usuń wydarzenie
+                            </a>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            Edycja i usuwanie dostępne dla właścicieli wydarzenia i administratorów wspólnoty
+                        </small>
+                    {% endif %}
+
+
+                    <!-- <a href="#" class="btn btn-outline-primary w-100 btn-sm mb-2">
                         ✏️ Edytuj wydarzenie
-                    </a>
+                    </a> -->
                     <a href="{% url 'activities:announcement_create' %}?event={{ event.pk }}"
                     class="btn btn-outline-primary w-100 mt-2">
                         📢 Dodaj ogłoszenie
