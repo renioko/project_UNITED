@@ -158,9 +158,9 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 # ===========================================================================
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-FORCE_SCRIPT_NAME = "/projectunited-production.up.railway.app"
-STATIC_URL = FORCE_SCRIPT_NAME + "/static/"
-# STATIC_URL = '/static/'
+# FORCE_SCRIPT_NAME = "/projectunited-production.up.railway.app"
+# STATIC_URL = FORCE_SCRIPT_NAME + "/static/"
+STATIC_URL = '/static/'
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
