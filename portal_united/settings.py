@@ -160,9 +160,10 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 # FORCE_SCRIPT_NAME = "/projectunited-production.up.railway.app"
 # STATIC_URL = FORCE_SCRIPT_NAME + "/static/"
-STATIC_URL = '/static/'
-# STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # AppDirectoriesFinder szuka w app/static/
 # FileSystemFinder szuka w STATICFILES_DIRS
@@ -170,19 +171,19 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
-STORAGES = {
-    # ...
-        "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        # "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",
-    },
-}
+# STORAGES = {
+#     # ...
+#         "default": {
+#         "BACKEND": "django.core.files.storage.FileSystemStorage",
+#     },
+#     "staticfiles": {
+#         # "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+#         "BACKEND": "whitenoise.storage.StaticFilesStorage",
+#     },
+# }
 # if DB_LIVE:
 #     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-# STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 # debugging:
 print("DEBUG STATIC CONFIG:")
 print("STATIC_ROOT:", STATIC_ROOT)
