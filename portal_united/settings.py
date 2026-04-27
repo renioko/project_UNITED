@@ -9,13 +9,11 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-import cloudinary
-import logging
-import sys
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-# from decouple import config, Csv
+from decouple import config, Csv
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,75 +21,48 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
-
-def get_env(key: str, default=None, required=False):
-    """
-    Ta funcja to helper, ktory ma rzucic własnym wyjątkiem.
-    Dzięki temu nie musze polegać na zewnętrznej bibliotece python-decouple
-    ani nie ryzykuje cichego błedu (None) przy uzyciu os.getenv.
-    Użycie:
-    # Wymagane - crashuje od razu z czytelnym błędem
-SECRET_KEY = get_env("SECRET_KEY", required=True)
-CLOUDINARY_CLOUD_NAME = get_env("CLOUDINARY_CLOUD_NAME", required=True)
-
-# Opcjonalne - ma sensowny default
-DEBUG = get_env("DEBUG", default="False").lower() == "true"
-```
-
-## Efekt gdy brakuje zmiennej
-```
-ValueError: ❌ Brakuje zmiennej środowiskowej: CLOUDINARY_CLOUD_NAME
-   Sprawdź plik .env lub zmienne środowiskowe serwera.
-    """
-    value = os.getenv(key, default)
-    if required and value is None:
-        raise ValueError(
-            f"❌ Brakuje zmiennej środowiskowej: {key}\n"
-            f"   Sprawdź plik .env lub zmienne środowiskowe serwera."
-        )
-    return value
-
-
-# ===========================================================================
-# 🚩 ENVIRONMENT FLAGS 
-# ===========================================================================
-
-# SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-DEBUG = get_env("DEBUG", default=False).lower() == "true"
-# print("DEBUG =", DEBUG, type(DEBUG)) sanity check xD
-# DB_LIVE = os.getenv("DB_LIVE", "False").lower() == "true"
-DB_LIVE = get_env("DB_LIVE", default=False). lower() == "true"
-
-# SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = os.getenv("SECRET_KEY")
-SECRET_KEY = get_env("SECRET_KEY")
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = os.getenv("DEBUG") == "True"
+# DEBUG - ustaw na podstawie zmiennej środowiskowej
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Security settings dla produkcji
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True  # deprecated
+    SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'projectunited-production.up.railway.app',
-    ]
+# ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] #💡potem zmienic
+# ALLOWED_HOSTS
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+# ALLOWED_HOSTS = os.environ.get(
+#     "ALLOWED_HOSTS",
+#     "localhost,127.0.0.1"
+# ).split(",")
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
+# CSRF_TRUSTED_ORIGINS = os.environ.get(
+#     "CSRF_TRUSTED_ORIGINS",
+#     ""
+# ).split(",")
+# CSRF_TRUSTED_ORIGINS = os.getenv(
+#     "CSRF_TRUSTED_ORIGINS",
+#     "http://localhost,http://127.0.0.1"
+# ).split(",")
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
-    # "https://*.railway.app",  
-    "https://projectunited-production.up.railway.app", 
+    "https://*.railway.app",  
+    "https://web-production-fcdf0.up.railway.app", 
 ]
 
 # Application definition
@@ -102,29 +73,23 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    # cloudinary
-    'cloudinary_storage',
-    'cloudinary',
-    # staticfiles
     'django.contrib.staticfiles',
     # Apps
     # 'communities',
-    'communities.apps.CommunitiesConfig', # - zamiast 'communities'
     'accounts',
-    'activities',
     # Django-allauth wymaga 'sites' framework
     'django.contrib.sites',
     # Django-allauth - system autoryzacji
     'allauth',
     'allauth.account',
     'allauth.socialaccount',  # Opcjonalnie - dla Google/Facebook login w przyszłości
+    'communities.apps.CommunitiesConfig', # - zamiast 'communities'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    "django.middleware.locale.LocaleMiddleware", # języki
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -153,110 +118,101 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'portal_united.wsgi.application'
 
-# ===========================================================================
-# STATIC FILES (CSS, JavaScript, Images)
-# ===========================================================================
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-# FORCE_SCRIPT_NAME = "/projectunited-production.up.railway.app"
-# STATIC_URL = FORCE_SCRIPT_NAME + "/static/"
-STATIC_URL = '/static/'
-# STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-
-STORAGES = {
-    # ...
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
-# AppDirectoriesFinder szuka w app/static/
-# FileSystemFinder szuka w STATICFILES_DIRS
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-]
-
-# if DB_LIVE:
-#     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
-# debugging:
-print("DEBUG STATIC CONFIG:")
-print("STATIC_ROOT:", STATIC_ROOT)
-print("STATIC_URL:", STATIC_URL)
-print("STATICFILES_STORAGE:", globals().get("STATICFILES_STORAGE"))
-
-
-# if not DB_LIVE:  
-#     STATICFILES_DIRS = [BASE_DIR / "static"]
-# else:
-#     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-# ==========================================================================
-# DATABASE CONFIGURATION
-# ===========================================================================
 
-if DB_LIVE:
-    # Railway/Production - używa DATABASE_URL
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('PGDATABASE'),
+#         'USER': os.getenv('PGUSER'),
+#         'PASSWORD': os.getenv('PGPASSWORD'),
+#         'HOST': os.getenv('PGHOST'),
+#         'PORT': os.getenv('PGPORT'),
+#     }
+# }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=config('DATABASE_URL', default=f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT', default='5432')}/{config('DB_NAME')}")
+#     )
+# }
+#     )
+# }
+
+# Jeśli istnieje DATABASE_URL (Railway), użyj jej
+# Jeśli nie (lokalne środowisko), zbuduj z oddzielnych zmiennych
+# if config('DATABASE_URL', default=None):
+#     DATABASES = {
+#         'default': dj_database_url.config(
+#             default=config('DATABASE_URL')
+#         )
+#     }
+# else:
+#     # Lokalna konfiguracja
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': config('DB_NAME'),
+#             'USER': config('DB_USER'),
+#             'PASSWORD': config('DB_PASSWORD'),
+#             'HOST': config('DB_HOST', default='localhost'),
+#             'PORT': config('DB_PORT', default='5432'),
+#         }
+#     }
+# Database configuration
+
+# Railway przekazuje DATABASE_URL jako system environment variable
+
+#debugging 📒✂️
+import os
+import sys
+
+print("=" * 80, file=sys.stderr)
+print("DEBUG: Environment variables check", file=sys.stderr)
+print(f"DATABASE_URL exists: {'DATABASE_URL' in os.environ}", file=sys.stderr)
+print(f"DATABASE_URL starts with: {os.getenv('DATABASE_URL', 'NOT FOUND')[:50]}", file=sys.stderr)
+print("=" * 80, file=sys.stderr)
+# end of debugging
+
+
+
+
+DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
     DATABASES = {
-        "default": dj_database_url.parse(
-            os.environ["DATABASE_URL"], # fail fast 💥 environ wywali KeyError (getenv zwraca None)
-            conn_max_age=600,
-            ssl_require=True,
-        )
+        'default': dj_database_url.parse(DATABASE_URL,  conn_max_age=600)
     }
+    # # Dodaj opcje połączenia dla Railway
+    # DATABASES['default']['OPTIONS'] = {
+    #     'connect_timeout': 10,
+    # }
 else:
-    # Lokalne środowisko - używa oddzielnych zmiennych
     DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
         }
     }
 
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO", # albo "DEBUG" 
-    },
-}
-
-
-# ============================================================================
-# AUTHENTICATION / ALLAUTH / EMAIL
-# ===========================================================================
-AUTH_USER_MODEL = "accounts.CustomUser"
-
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend", # Standardowy backend Django (username/password)
-    "allauth.account.auth_backends.AuthenticationBackend", # Backend allauth - pozwala na logowanie emailem
-]
-
-SITE_ID = 1 # SITES FRAMEWORK
-# Django-allauth wymaga tego - każda instalacja Django może obsługiwać
-# wiele stron (sites). My mamy jedną.
-
-# PASSWORD VALIDATION
+# Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -274,32 +230,48 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# EMAIL CONFIGURATION - Wysyłanie emaili weryfikacyjnych
-# --- Rozwój (development) - Console Backend ---
-# Email będzie "wysyłany" do konsoli/terminala (dla testów lokalnych)
-ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
-ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Internationalization
+# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-# Email Configuration - Mailjet REST API (omija problem SSL)
-EMAIL_BACKEND = 'portal_united.mailjet_backend.MailjetBackend'
-MAILJET_API_KEY = os.getenv('MAILJET_API_KEY')
-MAILJET_SECRET_KEY = os.getenv('MAILJET_SECRET_KEY')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+LANGUAGE_CODE = 'en-us'
 
-if not DB_LIVE:
-    # Lokalnie - wyświetlaj w konsoli - wtedy wyłaczyc powyzsza konfiguracje Mailjet
-    # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    # ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
-else:    
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'   
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_TZ = True
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
+
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# MEDIA FILES (jeśli będziesz uploadować pliki)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# AUTHENTICATION BACKENDS
+# Django-allauth potrzebuje własnego backendu obok standardowego
+AUTHENTICATION_BACKENDS = [
+    # Standardowy backend Django (username/password)
+    'django.contrib.auth.backends.ModelBackend',
+    
+    # Backend allauth - pozwala na logowanie emailem
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+# ============================================================================
+# SITES FRAMEWORK
+# Django-allauth wymaga tego - każda instalacja Django może obsługiwać
+# wiele stron (sites). My mamy jedną.
+SITE_ID = 1
 
 # ============================================================================
 # --DJANGO-ALLAUTH CONFIGURATION - NOWA SKŁADNIA (allauth 0.50+)--
-
 # --- Metody logowania ---
 # Użytkownik może logować się username LUB emailem
 ACCOUNT_LOGIN_METHODS = ['email', 'username']
@@ -335,6 +307,7 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
 
 # Minimalna długość hasła
 ACCOUNT_PASSWORD_MIN_LENGTH = 8
+
 # Czy pokazywać hasło podczas wpisywania? (bezpieczniej False)
 ACCOUNT_PASSWORD_INPUT_RENDER_VALUE = False
 
@@ -347,105 +320,111 @@ ACCOUNT_SESSION_REMEMBER = True
 
 # Gdzie przekierować po zalogowaniu?
 LOGIN_REDIRECT_URL = '/'
+
 # Gdzie przekierować po wylogowaniu?
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
 # Gdzie przekierować jeśli użytkownik próbuje dostać się do chronionej strony?
 LOGIN_URL = '/accounts/login/'
 
 # --- Formularze ---
 
-# Custom formularz rejestracji z wyborem typu użytkownika
+# Czy podczas rejestracji pytać o imię/nazwisko w standardowym formularzu?
+# Ustawimy False bo stworzymy własny formularz ❓
+# Nasz custom formularz rejestracji z wyborem typu użytkownika
 ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
 
-# ===========================================================================
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# ============================================================================
+# EMAIL CONFIGURATION - Wysyłanie emaili weryfikacyjnych
 
-LANGUAGE_CODE = "en-gb"  #'en-us'
+# --- Rozwój (development) - Console Backend ---
+# Email będzie "wysyłany" do konsoli/terminala (dla testów lokalnych)
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-LANGUAGES = [
-    ("en", "English"),
-    ("pl", "Polski"),
-]
 
-LOCALE_PATHS = [
-    BASE_DIR / "locale",
-]
 
-TIME_ZONE = "Europe/London"  #'UTC'
+# --- Produkcja (production) - Prawdziwe emaile ---
+# Odkomentować to gdy będziemy wdrażać na serwer i skonfigurować prawdziwy SMTP
 
-USE_I18N = True
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # Dla Gmail
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'twoj-email@gmail.com'  # Twój email
+# EMAIL_HOST_PASSWORD = 'twoje-haslo-aplikacji'  # Hasło aplikacji (nie zwykłe hasło!)
+# DEFAULT_FROM_EMAIL = 'Portal UNITED <noreply@portalunited.com>'
 
-USE_TZ = True
+# Uwaga: Dla Gmail trzeba wygenerować "hasło aplikacji" w ustawieniach konta Google
+# (nie używać zwykłego hasła do konta!)
 
-GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
-# for safety 
-SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = 'DENY'
 
-# ===========================================================================
+#  =================
+# stare zapisy database:
+# ===================================
 
-# MEDIA FILES (jeśli będziesz uploadować pliki)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# DB_LIVE = os.getenv('DB_LIVE', 'False')
 
-# ============================================
-# CLOUDINARY - Image Storage
-# ============================================
+# if DB_LIVE.lower() == 'false':
+#     # lokalna baza
+#     DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         }
+#     }
+# else:
+#     # produkcyjna baza (Railway)
+#     DATABASES = dj_database_url.parse(os.getenv('DATABASE_URL'))
+#     # DATABASES = {
+#     #     'default': {
+#     #     'ENGINE': 'django.db.backends.postgresql',
+#     #     'NAME': os.getenv('PGDATABASE'),
+#     #     'USER': os.getenv('PGUSER'),
+#     #     'PASSWORD': os.getenv('PGPASSWORD'),
+#     #     'HOST': os.getenv('PGHOST'),
+#     #     'PORT': os.getenv('PGPORT'),
+#     #     } 
+#     # }
+# DATABASE_URL = os.getenv('DATABASE_URL') or config('DATABASE_URL', default=None)
 
-# Cloudinary config
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': get_env('CLOUDINARY_CLOUD_NAME', required=True),
-    'API_KEY': get_env('CLOUDINARY_API_KEY', required=True),
-    'API_SECRET': get_env('CLOUDINARY_API_SECRET', required=True),
-}
-# cloudinary.config(
-#     cloud_name=get_env('CLOUDINARY_CLOUD_NAME', required=True),
-#     api_key=get_env('CLOUDINARY_API_KEY', required=True),
-#     api_secret=get_env('CLOUDINARY_API_SECRET', required=True),
-#     secure=True
-# )
 
-# Media files storage
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# Image validation
-MAX_IMAGE_SIZE = 5 * 1054 * 1054  # 5MB
+# # lub:  /wersja ze strony Raiway/
+# os.environ.setdefault("PGDATABASE", "portal_united")
+# os.environ.setdefault("PGUSER", os.getenv('DB_USER'))
+# os.environ.setdefault("PGPASSWORD", os.getenv('DB_PASSWORD'))
+# os.environ.setdefault("PGHOST", "localhost")
+# os.environ.setdefault("PGPORT", "5432")
 
-# ===========================================================================
-# DEFAULT AUTO FIELD
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.environ["PGDATABASE"],
+#         'USER': os.environ["PGUSER"],
+#         'PASSWORD': os.environ["PGPASSWORD"],
+#         'HOST': os.environ["PGHOST"],
+#         'PORT': os.environ["PGPORT"],
+#     }
+# }
 
-# Test settings
-if 'test' in sys.argv:
 
-    # Flaga dla mailjet_backend.py
-    TESTING = True
-    # Email backend dla testów - zapisuje w pamięci zamiast wysyłać
-
-    EMAIL_BACKEND = 'portal_united.mailjet_backend.MailjetBackend'
-    
-    # Wyłączam weryfikację emaila w testach (ułatwia testowanie logowania)
-    ACCOUNT_EMAIL_VERIFICATION = 'optional'
-
-    # Używaj szybszej bazy danych dla testów
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        }
-    }
-    # Wyłączam WhiteNoise dla testów (przyspiesza)
-    # STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-
-    # Dummy klucze Mailjet
-    MAILJET_API_KEY = 'test-key'
-    MAILJET_SECRET_KEY = 'test-secret'
-    DEFAULT_FROM_EMAIL = 'test@example.com'
-else:
-    TESTING = False
-
-    
-if __name__ == '__main__':
-    print('Jesus is my Lord')
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("PGDATABASE"),
+#         "USER": os.getenv("PGUSER"),
+#         "PASSWORD": os.getenv("PGPASSWORD"),
+#         "HOST": os.getenv("PGHOST"),
+#         "PORT": os.getenv("PGPORT"),
+#     }
+# }
