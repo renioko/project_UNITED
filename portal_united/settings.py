@@ -153,6 +153,49 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'portal_united.wsgi.application'
 
+# ===========================================================================
+# STATIC FILES (CSS, JavaScript, Images)
+# ===========================================================================
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
+
+FORCE_SCRIPT_NAME = "/projectunited-production.up.railway.app"
+STATIC_URL = FORCE_SCRIPT_NAME + "/static/"
+# STATIC_URL = '/static/'
+# STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+
+STORAGES = {
+    # ...
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# AppDirectoriesFinder szuka w app/static/
+# FileSystemFinder szuka w STATICFILES_DIRS
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+if DB_LIVE:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# debugging:
+print("DEBUG STATIC CONFIG:")
+print("STATIC_ROOT:", STATIC_ROOT)
+print("STATIC_URL:", STATIC_URL)
+print("STATICFILES_STORAGE:", globals().get("STATICFILES_STORAGE"))
+
+
+# if not DB_LIVE:  
+#     STATICFILES_DIRS = [BASE_DIR / "static"]
+# else:
+#     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+
+
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 # ==========================================================================
@@ -198,22 +241,7 @@ LOGGING = {
     },
 }
 
-# ===========================================================================
-# STATIC FILES (CSS, JavaScript, Images)
-# ===========================================================================
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-# Debug = True - jesli lokalnie ❗💡
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# if not DB_LIVE:  
-#     STATICFILES_DIRS = [BASE_DIR / "static"]
-# else:
-#     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-if DB_LIVE:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # ============================================================================
 # AUTHENTICATION / ALLAUTH / EMAIL
 # ===========================================================================
