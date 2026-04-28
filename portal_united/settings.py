@@ -163,7 +163,7 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # AppDirectoriesFinder szuka w app/static/
 # FileSystemFinder szuka w STATICFILES_DIRS
