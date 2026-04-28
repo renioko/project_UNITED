@@ -175,6 +175,7 @@ STORAGES = {
     },
 }
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 # ===========================================================================
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
@@ -191,24 +192,17 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
-# STORAGES = {
-#     # ...
-#         "default": {
-#         "BACKEND": "django.core.files.storage.FileSystemStorage",
-#     },
-#     "staticfiles": {
-#         # "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-#         "BACKEND": "whitenoise.storage.StaticFilesStorage",
-#     },
-# }
+
+
 # if DB_LIVE:
 #     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+# STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+
 # debugging:
-print("DEBUG STATIC CONFIG:")
-print("STATIC_ROOT:", STATIC_ROOT)
-print("STATIC_URL:", STATIC_URL)
-print("STATICFILES_STORAGE:", globals().get("STATICFILES_STORAGE"))
+# print("DEBUG STATIC CONFIG:")
+# print("STATIC_ROOT:", STATIC_ROOT)
+# print("STATIC_URL:", STATIC_URL)
+# print("STATICFILES_STORAGE:", globals().get("STATICFILES_STORAGE"))
 
 
 # if not DB_LIVE:  
@@ -479,7 +473,8 @@ if not DEBUG:
     print("=" * 60)
     print(f"STATIC_ROOT: {STATIC_ROOT}")
     print(f"STATIC_URL: {STATIC_URL}")
-    print(f"STATICFILES_STORAGE: {STATICFILES_STORAGE}")
+    # print(f"STATICFILES_STORAGE: {STATICFILES_STORAGE}")
+    print(f"STATICFILES_STORAGE: {STORAGES['staticfiles']["BACKEND"]}")
     
     # Sprawdź czy folder istnieje
     if Path(STATIC_ROOT).exists():
