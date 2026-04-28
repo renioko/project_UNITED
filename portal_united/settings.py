@@ -60,13 +60,13 @@ ValueError: ❌ Brakuje zmiennej środowiskowej: CLOUDINARY_CLOUD_NAME
 # ===========================================================================
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+# DEBUG = os.getenv("DEBUG", "False").lower() == "true" 
 DEBUG = get_env("DEBUG", default=False).lower() == "true"
-# print("DEBUG =", DEBUG, type(DEBUG)) sanity check xD
+
 # DB_LIVE = os.getenv("DB_LIVE", "False").lower() == "true"
 DB_LIVE = get_env("DB_LIVE", default=False). lower() == "true"
 
-# SECURITY WARNING: keep the secret key used in production secret!
+
 # SECRET_KEY = os.getenv("SECRET_KEY")
 SECRET_KEY = get_env("SECRET_KEY")
 
@@ -96,7 +96,7 @@ CSRF_TRUSTED_ORIGINS = [
     # "https://*.railway.app",  
     "https://projectunited-production.up.railway.app", 
 ]
-
+# ===========================================================================
 # Application definition
 
 INSTALLED_APPS = [
@@ -105,11 +105,13 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+
     # cloudinary
-    'cloudinary_storage',
     'cloudinary',
     # staticfiles
     'django.contrib.staticfiles',
+    # cloudinary srtorage - zeby nie blokowało collectstatic
+    'cloudinary_storage',
     # Apps
     # 'communities',
     'communities.apps.CommunitiesConfig', # - zamiast 'communities'
@@ -158,70 +160,52 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 # ===========================================================================
 # STATIC FILES (CSS, JavaScript, Images)
-# nowy, czysty build:
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# nowy build:
+# ============================================
 
-STATICFILES_DIRS = []  # 👈 WAŻNE
-# PRZED STORAGES:
-WHITENOISE_SKIP_COMPRESS_EXTENSIONS = []  # nie kompresuj niczego (bo i tak używasz StaticFilesStorage)
-WHITENOISE_AUTOREFRESH = True  # tylko dla debug
-WHITENOISE_USE_FINDERS = False  # nie używaj finders w produkcji
-WHITENOISE_MANIFEST_STRICT = False  # nie crashuj jeśli brakuje plików
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Gdzie szukać plików static:
+STATICFILES_DIRS = []  # pusty - używamy tylko app/static/
+
+# JAK szukać (MUSI BYĆ!):
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',  # ← KLUCZOWE!
+]
+
+# Django 5.0+ storage:
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",  # Media → Cloudinary
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",
-        # "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",  # Static → WhiteNoise
     },
 }
 
-# Cloudinary legacy requirement:
+# Legacy (dla Cloudinary):
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# ============================================
+# MEDIA FILES (uploaded by users) - Cloudinary
+# ============================================
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary config
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': get_env('CLOUDINARY_CLOUD_NAME', required=True),
+    'API_KEY': get_env('CLOUDINARY_API_KEY', required=True),
+    'API_SECRET': get_env('CLOUDINARY_API_SECRET', required=True),
+}
+
+# Image validation
+MAX_IMAGE_SIZE = 5 * 1054 * 1054  # 5MB
 
 
-# ===========================================================================
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-# FORCE_SCRIPT_NAME = "/projectunited-production.up.railway.app"
-# STATIC_URL = FORCE_SCRIPT_NAME + "/static/"
-
-# STATIC_URL = "/static/"
-# STATIC_ROOT = BASE_DIR / "staticfiles"
-# STATICFILES_DIRS = [BASE_DIR / "static"]
-
-# AppDirectoriesFinder szuka w app/static/
-# FileSystemFinder szuka w STATICFILES_DIRS
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-]
-
-
-# if DB_LIVE:
-#     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-# STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
-
-# debugging:
-# print("DEBUG STATIC CONFIG:")
-# print("STATIC_ROOT:", STATIC_ROOT)
-# print("STATIC_URL:", STATIC_URL)
-# print("STATICFILES_STORAGE:", globals().get("STATICFILES_STORAGE"))
-
-
-# if not DB_LIVE:  
-#     STATICFILES_DIRS = [BASE_DIR / "static"]
-# else:
-#     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 # ==========================================================================
 # DATABASE CONFIGURATION
 # ===========================================================================
@@ -297,6 +281,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# ===========================================================================
 
 # EMAIL CONFIGURATION - Wysyłanie emaili weryfikacyjnych
 # --- Rozwój (development) - Console Backend ---
@@ -381,7 +367,7 @@ LOGIN_URL = '/accounts/login/'
 # Custom formularz rejestracji z wyborem typu użytkownika
 ACCOUNT_SIGNUP_FORM_CLASS = 'accounts.forms.CustomSignupForm'
 
-# ===========================================================================
+# ============================================================================
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -408,35 +394,6 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 # for safety 
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
-
-# ===========================================================================
-
-# MEDIA FILES (jeśli będziesz uploadować pliki)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# ============================================
-# CLOUDINARY - Image Storage
-# ============================================
-
-# Cloudinary config
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': get_env('CLOUDINARY_CLOUD_NAME', required=True),
-    'API_KEY': get_env('CLOUDINARY_API_KEY', required=True),
-    'API_SECRET': get_env('CLOUDINARY_API_SECRET', required=True),
-}
-# cloudinary.config(
-#     cloud_name=get_env('CLOUDINARY_CLOUD_NAME', required=True),
-#     api_key=get_env('CLOUDINARY_API_KEY', required=True),
-#     api_secret=get_env('CLOUDINARY_API_SECRET', required=True),
-#     secure=True
-# )
-
-# Media files storage
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Image validation
-MAX_IMAGE_SIZE = 5 * 1054 * 1054  # 5MB
 
 # ===========================================================================
 # DEFAULT AUTO FIELD
@@ -470,6 +427,7 @@ if 'test' in sys.argv:
 else:
     TESTING = False
 
+# ===========================================================================
 # Na samym końcu settings.py:
 
 if not DEBUG:
@@ -502,5 +460,8 @@ if not DEBUG:
     print(f"\n🔧 WhiteNoise in MIDDLEWARE: {'whitenoise' in str(MIDDLEWARE).lower()}")
     print("=" * 60)
     
+
+# ============================================================================
+
 if __name__ == '__main__':
     print('Jesus is my Lord')
