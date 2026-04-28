@@ -182,14 +182,16 @@ STORAGES = {
     },
     "staticfiles": {
         # "BACKEND": "whitenoise.storage.StaticFilesStorage",  # Static → WhiteNoise
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"
+        # "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
     },
 }
 
 # Legacy (dla Cloudinary):
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ============================================
 # MEDIA FILES (uploaded by users) - Cloudinary
 # ============================================
