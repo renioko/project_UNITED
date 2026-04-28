@@ -158,12 +158,16 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 # ===========================================================================
 # STATIC FILES (CSS, JavaScript, Images)
-
 # nowy, czysty build:
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = []  # 👈 WAŻNE
+# PRZED STORAGES:
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = []  # nie kompresuj niczego (bo i tak używasz StaticFilesStorage)
+WHITENOISE_AUTOREFRESH = True  # tylko dla debug
+WHITENOISE_USE_FINDERS = False  # nie używaj finders w produkcji
+WHITENOISE_MANIFEST_STRICT = False  # nie crashuj jeśli brakuje plików
 
 STORAGES = {
     "default": {
@@ -174,8 +178,12 @@ STORAGES = {
         # "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"
     },
 }
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# Cloudinary legacy requirement:
 STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+
 # ===========================================================================
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
