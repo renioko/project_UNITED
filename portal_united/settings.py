@@ -155,14 +155,30 @@ WSGI_APPLICATION = 'portal_united.wsgi.application'
 
 # ===========================================================================
 # STATIC FILES (CSS, JavaScript, Images)
+
+# nowy, czysty build:
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = []  # 👈 WAŻNE
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
+    },
+}
+
 # ===========================================================================
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 # FORCE_SCRIPT_NAME = "/projectunited-production.up.railway.app"
 # STATIC_URL = FORCE_SCRIPT_NAME + "/static/"
 
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# STATIC_URL = "/static/"
+# STATIC_ROOT = BASE_DIR / "staticfiles"
 # STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # AppDirectoriesFinder szuka w app/static/

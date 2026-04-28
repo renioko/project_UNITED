@@ -1,1 +1,1 @@
-web: python manage.py collectstatic --noinput --verbosity 2
+eb: python manage.py collectstatic --noinput && python manage.py migrate && gunicorn portal_united.wsgi --bind 0.0.0.0:$PORT
