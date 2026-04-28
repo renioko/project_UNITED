@@ -18,16 +18,3 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portal_united.settings')
 time.sleep(3)
 
 application = get_wsgi_application()
-
-# === DEBUG - usuń to potem ===
-# static_root = Path('/app/staticfiles')
-# if static_root.exists():
-#     file_count = sum(1 for _ in static_root.rglob('*') if _.is_file())
-#     print(f"✅ /app/staticfiles/ EXISTS with {file_count} files")
-#     # Pokaż pierwsze 10 plików
-#     for i, f in enumerate(static_root.rglob('*')):
-#         if i > 10: break
-#         print(f"  - {f}")
-# else:
-#     print("❌ /app/staticfiles/ DOES NOT EXIST!")
-# === END DEBUG ===

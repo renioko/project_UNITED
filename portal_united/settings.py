@@ -181,13 +181,15 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",  # Media → Cloudinary
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",  # Static → WhiteNoise
+        # "BACKEND": "whitenoise.storage.StaticFilesStorage",  # Static → WhiteNoise
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"
     },
 }
 
 # Legacy (dla Cloudinary):
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+# STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 # ============================================
 # MEDIA FILES (uploaded by users) - Cloudinary
 # ============================================
@@ -428,38 +430,6 @@ else:
     TESTING = False
 
 # ===========================================================================
-# Na samym końcu settings.py:
-
-if not DEBUG:
-    import os
-    from pathlib import Path
-    
-    print("=" * 60)
-    print("🔍 PRODUCTION STATIC FILES DEBUG")
-    print("=" * 60)
-    print(f"STATIC_ROOT: {STATIC_ROOT}")
-    print(f"STATIC_URL: {STATIC_URL}")
-    print(f"STATICFILES_STORAGE: {STATICFILES_STORAGE}")
-    print(f"STORAGES: {STORAGES['staticfiles']["BACKEND"]}")
-    
-    # Sprawdź czy folder istnieje
-    if Path(STATIC_ROOT).exists():
-        file_count = sum(1 for _ in Path(STATIC_ROOT).rglob('*') if _.is_file())
-        print(f"✅ {STATIC_ROOT} EXISTS with {file_count} files")
-        
-        # Pokaż przykładowe pliki
-        print("\n📂 First 10 files:")
-        for i, f in enumerate(Path(STATIC_ROOT).rglob('*')):
-            if i >= 10: break
-            if f.is_file():
-                print(f"  - {f.relative_to(STATIC_ROOT)}")
-    else:
-        print(f"❌ {STATIC_ROOT} DOES NOT EXIST!")
-    
-    # Sprawdź WhiteNoise
-    print(f"\n🔧 WhiteNoise in MIDDLEWARE: {'whitenoise' in str(MIDDLEWARE).lower()}")
-    print("=" * 60)
-    
 
 # ============================================================================
 
