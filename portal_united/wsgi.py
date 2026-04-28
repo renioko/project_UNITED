@@ -12,8 +12,6 @@ import time
 # from pathlib import Path
 from django.core.wsgi import get_wsgi_application
 
-application = get_wsgi_application()
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portal_united.settings')
 
 # Poczekaj 3 sekundy na bazę danych (Railway workaround)
