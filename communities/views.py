@@ -321,7 +321,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         
         return context
 
-
 class ProfileEditView(LoginRequiredMixin, UpdateView):
     """
     Widok edycji profilu osoby.

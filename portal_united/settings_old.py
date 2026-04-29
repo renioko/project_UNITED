@@ -179,6 +179,21 @@ STORAGES = {
     },
 }
 
+
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+
+    # Important order
+    'cloudinary',
+    'django.contrib.staticfiles',
+    'cloudinary_storage',
+]
+
 # Cloudinary legacy requirement:
 STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
