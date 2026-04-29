@@ -29,6 +29,11 @@
                     📍 {{ profile.city }}
                 </p>
                 {% endif %}
+                {% if profile.country %}
+                <p class="mb-2">
+                    🌍 {{ profile.country }}
+                </p>
+                {% endif %}
                 
                 <p class="text-muted small">
                     Członek od {{ user.date_joined|date:"d.m.Y" }}

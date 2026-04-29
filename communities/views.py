@@ -332,7 +332,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     
     model = PersonProfile
     template_name = 'communities/profile_edit.html'
-    fields = ['first_name', 'last_name', 'city', 'bio', 'avatar']
+    fields = ['first_name', 'last_name', 'city', 'country', 'bio', 'avatar']
     success_url = reverse_lazy('communities:profile')
     
     def get_object(self, queryset=None):

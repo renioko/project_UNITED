@@ -59,6 +59,18 @@
                             class="form-control"
                             placeholder="Np. Kraków">
                     </div>
+
+                    <!-- Państwo -->
+                    <div class="mb-3">
+                        <label for="{{ form.city.id_for_label }}" class="form-label">
+                            Państwo
+                        </label>
+                        <input type="text" 
+                            name="country" 
+                            value="{{ form.city.value|default:'' }}"
+                            class="form-control"
+                            placeholder="Np. Polska">
+                    </div>
                     
                     <!-- Bio -->
                     <div class="mb-3">

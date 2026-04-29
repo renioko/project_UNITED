@@ -251,6 +251,7 @@ class PersonProfile(models.Model):
     first_name = models.CharField(max_length=100, verbose_name='Imię')
     last_name = models.CharField(max_length=100, blank=True, verbose_name='Nazwisko')
     city = models.CharField(max_length=100, blank=True, verbose_name='Miasto')
+    country = models.CharField(max_length=100, blank=True, verbose_name='Państwo')
     bio = models.TextField(max_length=500, blank=True, verbose_name='O mnie')
     
     # Daty
